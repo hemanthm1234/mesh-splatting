@@ -1,0 +1,100 @@
+
+(base) ➜  mesh-splatting
+(base) ➜  mesh-splatting git:(main) ✗ conda activate mesh_splatting
+(mesh_splatting) ➜  mesh-splatting git:(main) ✗ ./my_expts/vggt_omega_initialised
+(mesh_splatting) ➜  vggt_omega_initialised git:(main) ✗ ./run_vggt_no_prune.sh
+
+==================================================
+Starting VGGT Training (NO PRUNING) for scene: Truck
+==================================================
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Sparse Adam optimizer available
+Optimizing ./my_expts/vggt_omega_initialised/output_full_5M_noPrune/Truck
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [off]
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:208:
+ UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, pleas
+e use 'weights' instead.
+  warnings.warn(
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:223:
+ UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and ma
+y be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGENET
+1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Loading model from: /home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/lpips/weights
+/v0.1/vgg.pth
+Output folder: ./my_expts/vggt_omega_initialised/output_full_5M_noPrune/Truck [10/09 08:26:13]
+Tensorboard not available: not logging progress [10/09 08:26:13]
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/admin/.netrc.
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.28.2
+wandb: Run data is saved locally in /data1/hemanth/mesh-splatting/wandb/run-20260910_082614-z1ev2aps
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run vggt_5M_noPrune_Truck
+wandb:  View project at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting
+wandb:  View run at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/z1ev2aps
+Running in VGGT Omega Full Pipeline mode! [10/09 08:26:15]
+[VGGT Omega Init] Loading VGGT Omega point cloud from: /data1/hemanth/datasets/tandt/Truck/vggt_omega/vgg
+t_omega_5M.ply [10/09 08:26:15]
+Loading Training Cameras [10/09 08:26:17]
+[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.
+ If this is not desired, please explicitly specify '--resolution/-r' as 1 [10/09 08:26:17]
+Loading Test Cameras [10/09 08:26:39]
+Training progress:   1%| | 300/30000 [00:43<1:16:37,  6.46it/s, Loss=204.4574
+[ITER 300] Evaluating test: L1 0.13220345275476575 PSNR 14.247956395149231 SSIM 0.5242679947987199 LPIPS
+0.6382568031549454 FPS 26.85089741867467 [10/09 08:27:45]
+
+[ITER 300] Evaluating train: L1 0.11963317096233368 PSNR 14.84656162261963 SSIM 0.5325839698314667 LPIPS
+0.6416860699653626 FPS 27.146563586825874 [10/09 08:27:47]
+Training progress:   2%| | 600/30000 [01:50<1:22:23,  5.95it/s, Loss=0.34607]
+[ITER 600] Evaluating test: L1 0.11828466993756592 PSNR 15.221715420484543 SSIM 0.5375669496133924 LPIPS
+0.633099015802145 FPS 25.31492579922154 [10/09 08:28:52]
+
+[ITER 600] Evaluating train: L1 0.09930285215377808 PSNR 16.369492721557616 SSIM 0.5542401313781739 LPIPS
+ 0.6320849657058716 FPS 25.531054186016107 [10/09 08:28:53]
+Training progress:   3%| | 900/30000 [02:59<1:25:34,  5.67it/s, Loss=0.46461]
+[ITER 900] Evaluating test: L1 0.1107248030602932 PSNR 15.773487329483032 SSIM 0.5453304210677743 LPIPS 0
+.6278619319200516 FPS 24.06838046287245 [10/09 08:30:01]
+
+[ITER 900] Evaluating train: L1 0.09930161237716675 PSNR 16.516833305358887 SSIM 0.555158805847168 LPIPS
+0.6304246783256531 FPS 24.317442512723236 [10/09 08:30:02]
+Training progress:   4%| | 1200/30000 [06:54<2:37:55,  3.04it/s, Loss=5.83276
+[ITER 1200] Evaluating test: L1 0.122170529095456 PSNR 15.18626755475998 SSIM 0.5350818801671267 LPIPS 0.
+6357943285256624 FPS 11.82347092980467 [10/09 08:33:57]
+
+[ITER 1200] Evaluating train: L1 0.11179755777120591 PSNR 15.906512451171876 SSIM 0.5422101795673371 LPIP
+S 0.6358404159545898 FPS 11.874290515852548 [10/09 08:33:58]
+Training progress:   5%| | 1500/30000 [08:51<2:33:52,  3.09it/s, Loss=0.19584
+[ITER 1500] Evaluating test: L1 0.11104662134312093 PSNR 15.871432334184647 SSIM 0.5433153184130788 LPIPS
+ 0.6283761225640774 FPS 11.718815331187633 [10/09 08:35:54]
+
+[ITER 1500] Evaluating train: L1 0.10177606493234635 PSNR 16.52529106140137 SSIM 0.549001806974411 LPIPS
+0.6317164540290833 FPS 11.820622415580335 [10/09 08:35:55]
+Training progress:   6%| | 1800/30000 [14:44<3:22:21,  2.32it/s, Loss=0.17352
+[ITER 1800] Evaluating test: L1 0.11548298946581781 PSNR 15.554125040769577 SSIM 0.5386094385758042 LPIPS
+ 0.6327781174331903 FPS 8.900259326143745 [10/09 08:41:47]
+
+[ITER 1800] Evaluating train: L1 0.10709871351718903 PSNR 16.106167602539063 SSIM 0.5465129554271698 LPIP
+S 0.633382785320282 FPS 9.173625133448418 [10/09 08:41:48]
+Training progress:   7%| | 2000/30000 [16:28<3:18:56,  2.35it/s, Loss=0.17432Traceback (most recent call
+last):
+  File "/data1/hemanth/mesh-splatting/train.py", line 736, in <module>
+    training(lps,
+  File "/data1/hemanth/mesh-splatting/train.py", line 415, in training
+    triangles.add_new_gs(iteration, cap_max=effective_max_points, splitt_large_triangles=splitt_large_tri
+angles, context_adaptive_gradient_verification=opt.context_adaptive_gradient_verification)
+  File "/data1/hemanth/mesh-splatting/scene/triangle_model.py", line 824, in add_new_gs
+    rand_idx = self._sample_alives(probs=probs, num=num_gs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/hemanth/mesh-splatting/scene/triangle_model.py", line 767, in _sample_alives
+    sampled_idxs = torch.multinomial(probs, num, replacement=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: number of categories cannot exceed 2^24
+wandb:
+wandb: 🚀 View run vggt_5M_noPrune_Truck at: https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/z1ev
+2aps
+wandb: Find logs at: wandb/run-20260910_082614-z1ev2aps/logs
+❌ Error encountered during VGGT Training for scene: Truck.
+🎉 Finished executing script!
+(mesh_splatting) ➜  vggt_omega_initialised git:(main) ✗ tmux capture-pane -pS - > run_no_prune.txt
+
