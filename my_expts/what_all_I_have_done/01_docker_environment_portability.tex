@@ -1,0 +1,43 @@
+\section[\textcolor{\statusSecOne}{Docker \& Environment Portability}]{\textcolor{\statusSecOne}{Docker \& Environment Portability}}
+
+\begin{tcolorbox}[title={Status: [Completed]}, colframe=\statusSecOne, colback=\statusSecOne!5]
+\textbf{Aim / Why:} While the local development environment was fully functional and working perfectly, the primary objective of this task was to ensure maximum portability. By containerizing the working local setup, we gain the flexibility to easily deploy and run the codebase on any other remote machine without having to repeat the environment setup steps.
+\end{tcolorbox}
+
+\subsection{Execution \& Technical Details}
+\begin{itemize}
+    \item \textbf{Capturing the Local Environment}: 
+    Added \texttt{setup\_missing\_packages.sh} to codify the exact state of our working local environment into a reproducible script.
+    \begin{itemize}
+        \item Explicitly includes core packages (\texttt{open3d}, \texttt{trimesh}, \texttt{wandb}) via \texttt{uv pip install} to perfectly match our local runtime.
+        \item Retrieves utility files (e.g., \texttt{utils/mcube\_utils.py}) needed by our local pipeline so they are seamlessly baked into the container.
+        \item Downgrades \texttt{setuptools < 70} to ensure the environment remains stable when exported.
+    \end{itemize}
+    \item \textbf{Containerization Strategy (Docker Skill)}: 
+    Created the \texttt{docker\_environment} skill as the blueprint for translating the local environment into a highly portable Docker image.
+    \begin{itemize}
+        \item \textbf{Hardware Agnosticism}: Emphasized compiling extensions with a comprehensive \texttt{ENV TORCH\_CUDA\_ARCH\_LIST} (e.g., 7.0;7.5;8.0;8.6) to guarantee the portable image runs on any target GPU architecture without recompilation.
+        \item \textbf{Dependency Mapping}: Filtered out host-specific \texttt{nvidia-*} and \texttt{torch} packages from \texttt{requirements-frozen.txt} so the container relies cleanly on its \texttt{nvidia/cuda} base image.
+        \item \textbf{Version Pinning}: Strictly pinned PyTorch wheels to exact \texttt{cuXXX} versions to perfectly replicate the local runtime on any remote machines.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Visualization: Write Once, Run Anywhere Pipeline}
+\begin{center}
+\begin{tikzpicture}[auto]
+% Nodes
+\node (local) [startstop] {1. Fully Working Local Setup};
+\node (patch) [process, below=0.7cm of local] {2. Codify Environment State};
+\node (dockerfile) [process, below=0.7cm of patch] {3. Docker Blueprint};
+\node (image) [io, below=0.7cm of dockerfile, text width=3cm] {4. Portable\\Docker Image};
+\node (remote1) [startstop, below left=1.2cm and 0.2cm of image, fill=green!20] {Machine A};
+\node (remote2) [startstop, below right=1.2cm and 0.2cm of image, fill=green!20] {Machine B};
+
+% Connections
+\draw [arrow] (local) -- (patch);
+\draw [arrow] (patch) -- (dockerfile);
+\draw [arrow] (dockerfile) -- (image);
+\draw [arrow, dashed, thick, color=primary] (image) -- node[above left, xshift=-0.2cm] {Run} (remote1);
+\draw [arrow, dashed, thick, color=primary] (image) -- node[above right, xshift=0.2cm] {Run} (remote2);
+\end{tikzpicture}
+\end{center}

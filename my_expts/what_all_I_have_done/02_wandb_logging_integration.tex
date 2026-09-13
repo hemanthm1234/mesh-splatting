@@ -1,0 +1,58 @@
+\section[\textcolor{\statusSecTwo}{WandB Logging Integration}]{\textcolor{\statusSecTwo}{WandB Logging Integration}}
+
+\begin{tcolorbox}[title={Status: [Completed]}, colframe=\statusSecTwo, colback=\statusSecTwo!5]
+\textbf{Aim / Why:} Enable real-time experiment tracking for scalar metrics, photometric losses, and geometry statistics across training iterations, completely removing the need to manually parse terminal outputs.
+\end{tcolorbox}
+
+\subsection{Execution \& Technical Details}
+\begin{itemize}
+    \item \textbf{Integration}: Added \texttt{wandb.log} explicitly into \texttt{train.py} and created a reference skill guide.
+    \item \textbf{Currently Logged Metrics}:
+    \begin{itemize}
+        \item \textit{Initialization (Iter 0)}: Explicitly logs the starting \texttt{iteration} to establish the x-axis.
+        \item \textit{Every Iteration}: \texttt{train/pixel\_loss}, \texttt{train/total\_loss}, \texttt{train/iter\_time}, geometric prior losses (\texttt{loss\_depth\_l1}, \texttt{loss\_vertex\_depth\_hr}, \texttt{loss\_normal}), and system efficiency (\texttt{system/gpu\_vram\_allocated\_gb}).
+        \item \textit{Every 300 Iterations (Geometry)}: Structural evolution via \texttt{geometry/vertex\_count}, \texttt{geometry/triangle\_count}, and \texttt{geometry/vertex\_sharing\_ratio}. Opacity stats: \texttt{opacity\_mean}, \texttt{\_max}, \texttt{\_min}, and \texttt{opacity\_saturation\_pct}.
+        \item \textit{Every 300 Iterations (Validation)}: \texttt{l1\_loss}, \texttt{psnr}, \texttt{ssim}, \texttt{lpips}, and \texttt{fps}. Test images and normal maps are logged visually via \texttt{media/test\_images} and \texttt{media/normal\_maps}.
+        \item \textit{Every 500 Iterations (Pruning/Densification)}: \texttt{geometry/prune\_removed\_pct} and \texttt{geometry/densify\_added\_pct} tracking the percentage of triangles removed and added relative to the total triangle count before the operation.
+        \item \textit{End of Training (Summary Metrics)}: Final evaluation values are aggregated using \texttt{wandb.run.summary} for cross-run trade-off scatter plotting on the Project Workspace. Specifically: \texttt{final\_triangle\_count}, \texttt{final\_vertex\_count}, \texttt{final\_vertex\_sharing\_ratio}, \texttt{max\_vram\_gb}, final opacity stats (\texttt{mean}, \texttt{max}, \texttt{min}, \texttt{saturation}), and final quality metrics (\texttt{final\_psnr}, \texttt{final\_ssim}, \texttt{final\_lpips}, \texttt{final\_l1\_loss}, \texttt{final\_fps}). Additionally, post-training Tanks and Temples surface metrics are appended by resuming the run: \texttt{eval\_f\_score}, \texttt{eval\_precision}, \texttt{eval\_recall}, \texttt{eval\_distance\_tau}.
+        \item \textit{Artifacts}: The final optimized mesh (\texttt{native\_mesh\_30000.ply}) is uploaded and persisted to the WandB run using \texttt{wandb.save()} for future evaluation and reproducible geometry access.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Visualization: WandB Data Flow}
+\begin{center}
+\definecolor{topnodepink}{HTML}{FFC0CB}
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[auto]
+% Top Node
+\node (iter) [startstop, fill=topnodepink, text width=6cm] {Training Iteration $i$};
+
+% 3 Columns
+\node (300) [process, below=1cm of iter, text width=5cm, align=center, minimum height=4.5cm] {\textbf{Modulo 300 (Geom \& Val):}\\\texttt{vertex\_count}, \texttt{triangle\_count},\\\texttt{vertex\_sharing\_ratio},\\\texttt{opacity\_(mean,max,min,sat)},\\\texttt{l1\_loss}, \texttt{psnr}, \texttt{ssim}, \texttt{lpips}, \texttt{fps},\\\texttt{media/test\_images}, \texttt{media/normal\_maps}};
+
+\node (every) [process, left=0.4cm of 300, text width=5.2cm, align=center, minimum height=4.5cm] {\textbf{Every Iteration:}\\\texttt{pixel\_loss}, \texttt{total\_loss},\\\texttt{iter\_time},\\\texttt{loss\_depth\_l1},\\\texttt{loss\_vertex\_depth\_hr},\\\texttt{loss\_normal},\\\texttt{gpu\_vram\_allocated\_gb}};
+
+\node (500) [process, right=0.4cm of 300, text width=4.5cm, align=center, minimum height=4.5cm] {\textbf{Modulo 500 (Topology):}\\\texttt{prune\_removed\_pct},\\\texttt{densify\_added\_pct}};
+
+% WandB (Central Sink)
+\node (wandb) [startstop, fill=green!20, below=1.2cm of 300, text width=12cm] {WandB Dashboard (Scatter Plots \& Time-Series)};
+
+% End of Run (Feeds up into WandB)
+\node (end) [process, below=1.2cm of wandb, text width=14.5cm, align=center] {\textbf{End of Training (Summary Metrics \& Artifacts):}\\\texttt{final\_triangle\_count}, \texttt{final\_vertex\_count}, \texttt{final\_vertex\_sharing\_ratio}, \texttt{max\_vram\_gb}\\opacity stats (\texttt{mean}, \texttt{max}, \texttt{min}, \texttt{saturation})\\\texttt{final\_psnr}, \texttt{final\_ssim}, \texttt{final\_lpips}, \texttt{final\_l1\_loss}, \texttt{final\_fps}\\\textbf{T\&T Eval (Resumed Run):} \texttt{eval\_f\_score}, \texttt{eval\_precision}, \texttt{eval\_recall}, \texttt{eval\_distance\_tau}\\\textbf{Artifact:} \texttt{native\_mesh\_30000.ply} saved to WandB};
+
+% Routing from iter
+\draw [arrow] (iter.south) -- +(0,-0.5) -| (every.north);
+\draw [arrow] (iter.south) -- (300.north);
+\draw [arrow] (iter.south) -- +(0,-0.5) -| (500.north);
+
+% Routing from columns to wandb
+\draw [arrow] (every.south) -- +(0,-0.6) -| (wandb.north);
+\draw [arrow] (300.south) -- (wandb.north);
+\draw [arrow] (500.south) -- +(0,-0.6) -| (wandb.north);
+
+% Routing from end to wandb
+\draw [arrow] (end.north) -- (wandb.south);
+
+\end{tikzpicture}
+}
+\end{center}

@@ -1,6 +1,6 @@
 # My custom ones
 my_expts/*
-!my_expts/vggt_omega_initialised
+!my_expts/what_all_I_have_done
 my_expts/baseline_mesh_splatting_metrics/output
 my_expts/baseline_mesh_splatting_metrics/wandb
 my_expts/baseline_mesh_splatting_metrics/wandb_screenshots_old

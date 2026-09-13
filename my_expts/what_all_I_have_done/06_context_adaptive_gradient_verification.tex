@@ -1,0 +1,33 @@
+\section[\textcolor{\statusSecSix}{[Expt] Context-Adaptive Gradient Verification}]{\textcolor{\statusSecSix}{[Expt] Context-Adaptive Gradient Verification}}
+
+\begin{tcolorbox}[title={Status: [Pending Execution]}, colframe=\statusSecSix, colback=\statusSecSix!5]
+\textbf{Aim / Why:} Reduce the final primitive (triangle) count by intelligently pruning "floater" triangles and selectively densifying edges based on the consistency of vertex positional gradients, rather than blindly splitting based on size or opacity.
+\end{tcolorbox}
+
+\subsection{Execution \& Technical Details}
+\begin{itemize}
+    \item \textbf{Implementation Strategy}: Modified core logic in \texttt{scene/triangle\_model.py} and \texttt{train.py} behind a new flag \texttt{--context\_adaptive\_gradient\_verification}.
+    \item \textbf{Consistency Metric Calculation}:
+    \begin{itemize}
+        \item Taps directly into the Adam optimizer's internal state.
+        \item Retrieves Exponential Moving Average (\texttt{exp\_avg}) and Variance (\texttt{exp\_avg\_sq}) for the \texttt{vertices} parameter.
+        \item \textbf{Formula}: $Consistency = \frac{\|\text{EMA}(g)\|}{\sqrt{\text{EMA}(g^2)} + 10^{-8}}$
+        \item Yields a score from 0 (highly oscillating/noise) to 1 (consistent trajectory). Vertices lacking history default to 1.0 to prevent unfair pruning.
+    \end{itemize}
+    \item \textbf{Densification Modification}: In \texttt{add\_new\_gs()}, the base split probability is multiplied by the mean vertex consistency, favoring the splitting of triangles with strong structural momentum.
+    \item \textbf{Pruning Modification}: During pruning cycles, triangles whose mean consistency falls into the bottom 10th percentile are permanently deleted using \texttt{thresh = torch.quantile(tri\_consistency, 0.1).clamp(max=0.1)}.
+\end{itemize}
+
+\subsection{Visualization: Adaptive Pruning Logic}
+\begin{center}
+\begin{tikzpicture}[node distance=2.2cm]
+\node (adam) [startstop] {Adam Optimizer State for Vertices};
+\node (formula) [process, below of=adam, text width=6cm] {Extract \texttt{exp\_avg}, \texttt{exp\_avg\_sq}\\Compute Consistency Score $\in [0,1]$};
+\node (dens) [process, below left=1.5cm and 0.5cm of formula, text width=4cm] {\textbf{Densification Phase}\\$\text{Probs} \leftarrow \text{Probs} \times \text{Consistency}$};
+\node (prune) [process, below right=1.5cm and 0.5cm of formula, text width=4cm] {\textbf{Pruning Phase}\\Delete if Consistency $< 10^{\text{th}}$ percentile};
+
+\draw [arrow] (adam) -- (formula);
+\draw [arrow] (formula) -| (dens);
+\draw [arrow] (formula) -| (prune);
+\end{tikzpicture}
+\end{center}

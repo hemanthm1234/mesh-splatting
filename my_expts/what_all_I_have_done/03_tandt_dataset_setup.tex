@@ -1,0 +1,267 @@
+\section[\textcolor{\statusSecThree}{Tanks \& Temples Dataset Setup \& Preprocessing}]{\textcolor{\statusSecThree}{Tanks \& Temples Dataset Setup \& Preprocessing}}
+
+\begin{tcolorbox}[title={Status: [Completed]}, colframe=\statusSecThree, colback=\statusSecThree!5]
+\textbf{Aim / Why:} Tanks and Temples (T\&T) serves as the primary real-world surface reconstruction benchmark for evaluating MeshSplatting. However, raw downloads from public archives cannot be consumed directly by modern 3D Gaussian Splatting and mesh extraction pipelines. The objective was to ingest the 7-scene Training Set, restructure irregular raw archives, reconstruct camera poses via COLMAP, generate dense monocular depth priors via Depth Anything V3 (DA3) with mathematically correct disparity inversion, establish affine scale/shift alignments, provision VGGT Omega alternative tracking, and build an evaluation harness with modernized Open3D integration.
+\end{tcolorbox}
+
+\subsection{Dataset Overview \& Training Set Characteristics}
+The complete Tanks and Temples benchmark comprises 21 scenes across Training, Intermediate, and Advanced tiers. We acquired and prepared the complete \textbf{Training Set} (7 scenes) captured using high-end Sony a7S II and DJI X5R cameras:
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|l|c|c|c|c|c|c|c|}
+\hline
+\textbf{Scene} & \textbf{Environment} & \textbf{Images} & \textbf{COLMAP Reg.} & \textbf{GT Scans} & \textbf{DA3 Depth} & \textbf{VGGT Omega} & \textbf{MeshSplatting Ready} \\ \hline
+\textbf{Barn} & Outdoor & 410 & 410 (100\%) & 9 & \checkmark (16-bit) & \checkmark & \checkmark \\ \hline
+\textbf{Caterpillar} & Outdoor & 383 & 383 (100\%) & 9 & \checkmark (16-bit) & \checkmark & \checkmark \\ \hline
+\textbf{Church} & Outdoor & 507 & 0 (Failed) & 10 & \checkmark (16-bit) & \checkmark & \checkmark \textit{(via VGGT)} \\ \hline
+\textbf{Courthouse} & Outdoor & 1106 & 2 (0.18\%) & 19 & \checkmark (16-bit) & -- & Baseline Reg. Required \\ \hline
+\textbf{Ignatius} & Object / Statue & 263 & 263 (100\%) & 8 & \checkmark (16-bit) & \checkmark & \checkmark \\ \hline
+\textbf{Meeting\_room} & Indoor & 371 & 371 (100\%) & 11 & \checkmark (16-bit) & \checkmark & \checkmark \\ \hline
+\textbf{Truck} & Outdoor & 251 & 251 (100\%) & 8 & \checkmark (16-bit) & \checkmark & \checkmark \\ \hline
+\end{tabular}
+}
+\end{center}
+
+\vspace{0.2cm}
+\noindent Each raw downloaded scene archive contains an irregular multi-folder hierarchy:
+\begin{itemize}
+    \item \texttt{Image\_Set/}: Extracted high-resolution RGB frames ($1920\times1080$), typically placed in nested scene subdirectories.
+    \item \texttt{Camera\_Poses/}: SfM trajectory logs (\texttt{.log}, \texttt{.data}) provided by benchmark authors.
+    \item \texttt{Ground\_Truth/}: Industrial laser scanner ground truth point cloud. Stored with a \texttt{.data} file extension, but structurally standard binary PLY format.
+    \item \texttt{Individual\_Scans/}: Unmerged individual scanner station point clouds (\texttt{.ply}) and station coordinates (\texttt{scanner\_pos.txt}), representing partial view frustums before registration.
+    \item \texttt{Alignment/}: Rigid transformation matrices (\texttt{\_trans.txt} or \texttt{.data}) mapping the arbitrary SfM camera frame into the laser scanner coordinate system.
+    \item \texttt{Cropfiles/}: JSON bounding polygon volumes (\texttt{SelectionPolygonVolume}) specifying the Region of Interest (ROI) to exclude distant untracked backgrounds.
+    \item \texttt{Reconstruction/} \& \texttt{Video/}: Author baseline surface meshes and video capture metadata.
+\end{itemize}
+
+\subsection{Execution \& Technical Preprocessing Pipeline}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Resilient Download Harness (\texttt{download.sh})}:
+    Due to severe Google Drive API rate limiting and connection timeouts when downloading multi-gigabyte folders containing thousands of high-resolution images, we implemented an automated wrapper around \texttt{gdown --folder --continue}. The script runs in a persistent recovery loop that automatically sleeps and resumes upon connection interruption without re-downloading existing chunks.
+
+    \item \textbf{Image Hierarchy Normalization (\texttt{preprocess\_colmap.sh})}:
+    MeshSplatting and 3DGS loaders expect a flat \texttt{images/} directory. We automated the transition:
+    \begin{itemize}
+        \item Renamed \texttt{Image\_Set/} to \texttt{images/}.
+        \item Flattened nested subfolders by relocating all JPEG frames to the root of \texttt{images/} and removing empty subdirectories.
+    \end{itemize}
+
+    \item \textbf{Structure-from-Motion Reconstruction (COLMAP)}:
+    \begin{itemize}
+        \item \textit{Feature Extraction}: Extracted SIFT features constrained to a single shared \texttt{PINHOLE} camera model (\texttt{--ImageReader.single\_camera 1}).
+        \item \textit{Exhaustive Matching}: Performed pairwise matching via \texttt{colmap exhaustive\_matcher} into \texttt{colmap.db}.
+        \item \textit{Incremental Mapping}: Reconstructed sparse 3D geometry into \texttt{sparse/0/}, producing \texttt{cameras.bin}, \texttt{images.bin}, and \texttt{points3D.bin}.
+        \item \textit{Path Anomaly Resolution}: Resolved COLMAP nested output bugs where certain scenes nested outputs inside \texttt{sparse/0/0/}, automatically promoting them to \texttt{sparse/0/}.
+        \item \textit{Edge Case Handling}:
+        \begin{itemize}
+            \item \textbf{Church}: Frame range \texttt{000501.jpg}--\texttt{000593.jpg} was missing from the source dataset, resulting in broken feature tracks where COLMAP failed to register any cameras.
+            \item \textbf{Courthouse}: Despite containing 1106 images, extreme scale variations and wide baselines caused standard incremental COLMAP mapping to register only 2 views.
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Monocular Depth Priors with Disparity Inversion (\texttt{run\_da3.py})}:
+    MeshSplatting incorporates geometric regularization losses ($\mathcal{L}_z$ and $\mathcal{L}_d$) that penalize discrepancies between projected triangle vertices and monocular depth priors.
+    \begin{itemize}
+        \item \textit{Model Architecture}: Used Depth Anything V3 (\texttt{depth-anything/DA3-GIANT-1.1}).
+        \item \textit{Direct Depth vs. Disparity Inversion}: DA3 naturally predicts direct metric depth $D_{\text{metric}}$. However, MeshSplatting's alignment pipeline (\texttt{make\_depth\_scale.py}) expects \textbf{disparity (inverse depth)}:
+        \begin{equation}
+            d_{\text{inv}} = \frac{1}{D_{\text{metric}} + 10^{-6}}
+        \end{equation}
+        \item \textit{16-bit Quantization}: Disparity is normalized to $[0, 1]$ and mapped to high-precision 16-bit unsigned integers ($0$--$65535$):
+        \begin{equation}
+            I_{\text{depth}} = \left\lfloor \frac{d_{\text{inv}} - \min(d_{\text{inv}})}{\max(d_{\text{inv}}) - \min(d_{\text{inv}})} \times 65535 \right\rfloor \in \mathbb{N}_{16}
+        \end{equation}
+        Exported as 16-bit single-channel grayscale PNGs in \texttt{depth/}. This matches the exact internal division factor of $2^{16} = 65536$ in \texttt{make\_depth\_scale.py}.
+    \end{itemize}
+
+    \item \textbf{Affine Depth Scale \& Shift Calibration (\texttt{depth\_scene.sh})}:
+    Because monocular disparity is defined only up to an unknown scale and offset, we executed \texttt{utils/make\_depth\_scale.py} to solve for affine parameters $(s, t)$ aligning disparity with sparse COLMAP points:
+    \begin{equation}
+        d_{\text{aligned}} = s \cdot d_{\text{mono}} + t \approx d_{\text{colmap}}
+    \end{equation}
+    The optimal transformation parameters are written to \texttt{sparse/0/depth\_params.json} for each scene.
+
+    \item \textbf{Alternative Dense Tracking Prior (VGGT Omega)}:
+    To address the failure of COLMAP on challenging scenes, we integrated VGGT Omega outputs:
+    \begin{itemize}
+        \item Provisioned \texttt{vggt\_omega/} with \texttt{cameras.json} and ultra-dense multi-gigabyte point clouds (\texttt{points3D.ply}).
+        \item Generated scene-level depth alignment parameters (\texttt{vggt\_omega/depth\_params.json}) using Z-buffer projections.
+        \item Rescued the \textbf{Church} scene, allowing MeshSplatting to initialize and optimize geometry despite missing COLMAP models.
+    \end{itemize}
+
+    \item \textbf{Evaluation Dataset Structure \& Open3D Patching (\texttt{prepare\_eval\_data.sh})}:
+    The official Tanks and Temples benchmark evaluation harness (\texttt{tandt\_eval/}) requires uniform filenames and clean file extensions.
+    \begin{itemize}
+        \item \textit{Zero-Copy Symlinking}: Created \texttt{datasets/tandt\_eval\_data/} and populated it via relative/absolute symlinks without duplicating tens of gigabytes of disk space:
+        \begin{align*}
+            \texttt{Ground\_Truth/*.data} &\longrightarrow \texttt{tandt\_eval\_data/<scene>/<scene>.ply} \\
+            \texttt{Alignment/*} &\longrightarrow \texttt{tandt\_eval\_data/<scene>/<scene>\_trans.txt} \\
+            \texttt{Camera\_Poses/*} &\longrightarrow \texttt{tandt\_eval\_data/<scene>/<scene>\_COLMAP\_SfM.log} \\
+            \texttt{Cropfiles/*} &\longrightarrow \texttt{tandt\_eval\_data/<scene>/<scene>.json}
+        \end{align*}
+        \item \textit{Open3D $\ge 0.13.0$ API Upgrade}: The official script \texttt{registration.py} (in \texttt{tandt\_eval/}) used deprecated Open3D calls that threw runtime attribute errors. We updated all registration and ICP calls to modern namespaces (\texttt{o3d.pipelines.registration}).
+        \item \textit{Pipeline Verification (\texttt{test\_evaluation.sh})}: Validated the entire evaluation stack by evaluating ground-truth point clouds against themselves on \texttt{Truck} and \texttt{Ignatius}, ensuring precision, recall, and F-score calculation run error-free.
+    \end{itemize}
+\end{enumerate}
+
+\clearpage
+\subsection{Visualization: End-to-End Dataset Transformation Pipeline}
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[
+    scale=0.85, transform shape,
+    font=\sffamily\small,
+    raw/.style={rectangle, rounded corners=4pt, draw=red!70!black, fill=red!10, text centered, minimum height=1.3cm, thick},
+    process/.style={rectangle, rounded corners=3pt, draw=black!80, fill=orange!10, text centered, minimum height=1.3cm, thick},
+    priors/.style={rectangle, rounded corners=3pt, draw=orange!80!black, fill=yellow!15, text centered, minimum height=1.3cm, thick},
+    vggtbox/.style={rectangle, rounded corners=3pt, draw=cyan!80!black, fill=cyan!15, text centered, minimum height=1.3cm, thick},
+    ready/.style={rectangle, rounded corners=5pt, draw=primary, fill=primary!12, text centered, minimum height=1.6cm, line width=1.2pt},
+    eval/.style={rectangle, rounded corners=5pt, draw=secondary, fill=secondary!12, text centered, minimum height=1.6cm, line width=1.2pt},
+    arrow/.style={thick, ->, >=stealth, draw=black!80},
+    dashed_arrow/.style={thick, dashed, ->, >=stealth, draw=black!80}
+]
+
+% ── TOP LEVEL: INGESTION (y=0) ───────────────────────────────────────
+\node (raw_drive) at (2.25, 0) [raw, text width=4.6cm] {%
+    \textbf{Google Drive Ingestion}\\
+    \texttt{download.sh} (\texttt{gdown --continue})\\
+    \textit{Resilient retry on rate limits}%
+};
+
+\node (raw_scenes) at (11.5, 0) [raw, text width=8.5cm] {%
+    \textbf{Raw Tanks \& Temples Training Set (7 Scenes)}\\
+    \texttt{Image\_Set/}, \texttt{Ground\_Truth/}, \texttt{Alignment/}, \texttt{Cropfiles/}\\
+    \textit{Barn, Caterpillar, Church, Courthouse,}\\[-0.05cm]
+    \textit{Ignatius, Meeting\_room, Truck}%
+};
+
+% ── TRACK HEADERS / LEVEL 1 (y=-3.5) ───────────────────────────────────
+\node (flatten) at (2.25, -3.5) [process, text width=7.5cm] {%
+    \textbf{Image Directory Normalization}\\
+    \texttt{preprocess\_colmap.sh}: \texttt{Image\_Set/} $\to$ flat \texttt{images/}\\
+    \textit{Unnest all frames \& prune empty directories}%
+};
+
+% ── LEVEL 2: PARALLEL FEATURE / GEOMETRY EXTRACTION (y=-7.5) ──────────
+% Track 1A: COLMAP
+\node (colmap) at (0, -7.5) [process, text width=3.8cm] {%
+    \textbf{COLMAP SfM}\\
+    \texttt{PINHOLE} / Exhaustive\\
+    $\to$ \texttt{sparse/0/}\\
+    \texttt{cameras.bin}, \texttt{points3D.bin}%
+};
+
+% Track 1B: DA3 Depth
+\node (da3) at (4.5, -7.5) [priors, text width=3.8cm] {%
+    \textbf{DA3 Depth Prior}\\
+    \texttt{DA3-GIANT-1.1}\\
+    $d_{\text{inv}} = 1 / (D_{\text{metric}} + \epsilon)$\\
+    16-bit PNGs $\to$ \texttt{depth/}%
+};
+
+% Track 2: VGGT Omega Prior
+\node (vggt) at (9.0, -7.5) [vggtbox, text width=3.8cm] {%
+    \textbf{VGGT Omega Prior}\\
+    \texttt{cameras.json} (Poses)\\
+    \texttt{points3D.ply} (Dense Geometry)\\
+    \textit{Alternative for Church}%
+};
+
+% Track 3: Benchmark Evaluation Preprocessing
+\node (eval_prep) at (14.0, -7.5) [process, text width=4.8cm] {%
+    \textbf{Zero-Copy Symlinker}\\
+    \texttt{prepare\_eval\_data.sh}\\
+    $\to$ \texttt{tandt\_eval\_data/<scene>/}\\
+    \texttt{.data} $\to$ \texttt{.ply}, \texttt{\_trans.txt}, \texttt{.json}%
+};
+
+% ── LEVEL 3: CALIBRATION & ALIGNMENT (y=-11.5) ─────────────────────────
+% Track 1 Alignment
+\node (align_depth) at (2.25, -11.5) [process, text width=7.5cm] {%
+    \textbf{Affine Depth Scale Calibration}\\
+    \texttt{utils/make\_depth\_scale.py} (\texttt{depth\_scene.sh})\\
+    Solves $s \cdot d_{\text{mono}} + t \approx d_{\text{colmap}}$\\
+    $\to$ \texttt{sparse/0/depth\_params.json}%
+};
+
+% Track 2 VGGT Alignment
+\node (vggt_depth) at (9.0, -11.5) [vggtbox, text width=3.8cm] {%
+    \textbf{VGGT Depth Alignment}\\
+    Z-Buffer projection scale\\
+    $\to$ \texttt{depth\_params.json}\\
+    (\texttt{vggt\_omega/} directory)%
+};
+
+% Track 3 Open3D Patch
+\node (eval_patch) at (14.0, -11.5) [process, text width=4.8cm] {%
+    \textbf{Open3D $\ge 0.13$ Modernization}\\
+    Patched \texttt{registration.py}\\
+    {\footnotesize\texttt{o3d.pipelines.registration}}\\
+    \textit{Fixes deprecated ICP API}%
+};
+
+% ── LEVEL 4: READY TARGET STATES (y=-16.0) ─────────────────────────────
+\node (meshsplatting) at (2.25, -16.0) [ready, text width=8.5cm] {%
+    \textbf{MeshSplatting Training Ready Scene}\\
+    \texttt{images/}, \texttt{depth/}, \texttt{sparse/0/}, \texttt{depth\_params.json}\\
+    \textit{Ready for Triangle Soup Optimization (Stages 1--3)}%
+};
+
+\node (eval_ready) at (14.0, -16.0) [eval, text width=5.0cm] {%
+    \textbf{T\&T Evaluation Harness}\\
+    \texttt{tandt\_eval\_data/<scene>/}\\
+    Validated via \texttt{test\_evaluation.sh}\\
+    \textit{Precision, Recall, and F-score}%
+};
+
+% ── CONNECTIONS & ARROWS ───────────────────────────────────────────────
+% Drive -> Scenes
+\draw [arrow] (raw_drive.east) -- (raw_scenes.west);
+
+% Scenes -> Branch 1 (to Flatten)
+\draw [arrow] ([xshift=-2.0cm]raw_scenes.south) -- ([xshift=-2.0cm]raw_scenes.south |- 0, -1.75) -- (flatten.north |- 0, -1.75) -- (flatten.north);
+
+% Scenes -> Branch 2 (to VGGT)
+\draw [arrow] ([xshift=-0.5cm]raw_scenes.south) -- ([xshift=-0.5cm]raw_scenes.south |- 0, -1.75) -- (vggt.north |- 0, -1.75) -- (vggt.north);
+
+% Scenes -> Branch 3 (to Eval Prep)
+\draw [arrow] ([xshift=2.0cm]raw_scenes.south) -- ([xshift=2.0cm]raw_scenes.south |- 0, -1.75) -- (eval_prep.north |- 0, -1.75) -- (eval_prep.north);
+
+% Track 1: Flatten -> Fork to COLMAP & DA3
+\coordinate (fork1) at (flatten.south |- 0, -5.5);
+\draw (flatten.south) -- (fork1);
+\draw [arrow] (fork1) -| (colmap.north);
+\draw [arrow] (fork1) -| (da3.north);
+
+% Track 1: COLMAP & DA3 -> Affine Alignment
+\draw [arrow] (colmap.south) -- (colmap.south |- 0, -9.5) -- ([xshift=-1.5cm]align_depth.north |- 0, -9.5) -- ([xshift=-1.5cm]align_depth.north);
+\draw [arrow] (da3.south)    -- (da3.south |- 0, -9.5)    -- ([xshift=1.5cm]align_depth.north |- 0, -9.5)  -- ([xshift=1.5cm]align_depth.north);
+
+% Track 1: Affine Alignment -> MeshSplatting Ready
+\draw [arrow] ([xshift=-1.0cm]align_depth.south) -- ([xshift=-1.0cm]meshsplatting.north);
+
+% Track 2: VGGT -> VGGT Depth
+\draw [arrow] (vggt.south) -- (vggt_depth.north);
+
+% Track 2 -> MeshSplatting Ready (Alternative Dense Input)
+\draw [arrow, dashed, draw=cyan!80!black, thick] 
+    (vggt_depth.south) -- (vggt_depth.south |- 0, -13.5) 
+    -- node[above, font=\scriptsize\sffamily\color{cyan!80!black}] {Alt. Dense Pipeline} ([xshift=2.0cm]meshsplatting.north |- 0, -13.5) 
+    -- ([xshift=2.0cm]meshsplatting.north);
+
+% Track 3: Eval Prep -> Eval Patch -> Eval Ready
+\draw [arrow] (eval_prep.south) -- (eval_patch.north);
+\draw [arrow] (eval_patch.south) -- (eval_ready.north);
+
+% Post-Training Evaluation Bridge
+\draw [arrow, dashed, draw=secondary, thick] (meshsplatting.east) -- 
+    node[above, font=\scriptsize\sffamily\bfseries\color{darkgray}, align=center] {Evaluate Native Mesh\\(\texttt{point\_cloud.ply})} 
+    node[below, font=\scriptsize\sffamily\color{darkgray}, align=center] {Benchmarked against\\Ground Truth PLY Scans} 
+    (eval_ready.west);
+
+\end{tikzpicture}
+}
+\end{center}
+\clearpage
