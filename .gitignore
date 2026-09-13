@@ -1,3 +1,7 @@
+# My custom ones
+my_expts/*
+wandb/*
+
 # Byte-compiled / optimized / DLL files
 */__pycache__/
 *.py[cod]

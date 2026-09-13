@@ -90,6 +90,9 @@ def loadCam(args, id, cam_info, resolution_scale):
         scale = float(global_down) * float(resolution_scale)
         resolution = (int(orig_w / scale), int(orig_h / scale))
 
+    if invdepthmap is not None:
+        invdepthmap = cv2.resize(invdepthmap, resolution, interpolation=cv2.INTER_LINEAR)
+
     if len(cam_info.image.split()) > 3:
         resized_image_rgb = torch.cat([PILtoTorch(im, resolution) for im in cam_info.image.split()[:3]], dim=0)
         loaded_mask = PILtoTorch(cam_info.image.split()[3], resolution)
@@ -101,6 +104,7 @@ def loadCam(args, id, cam_info, resolution_scale):
 
     normal_map = getattr(cam_info, 'normal_map', None)
     if normal_map is not None:
+        normal_map = cv2.resize(normal_map, resolution, interpolation=cv2.INTER_LINEAR)
         normal_map = torch.from_numpy(normal_map).permute(2, 0, 1).float()  # [3, H, W]
     else:
         normal_map = None

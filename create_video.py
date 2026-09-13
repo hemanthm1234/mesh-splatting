@@ -20,7 +20,7 @@ from os import makedirs
 from triangle_renderer import render
 import torchvision
 from argparse import ArgumentParser
-from arguments import ModelParams, PipelineParams, get_combined_args
+from arguments import ModelParams, PipelineParams, VGGTParams, get_combined_args
 from scene import Scene, TriangleModel
 import numpy as np
 from utils.render_utils import generate_path, create_videos
@@ -76,60 +76,66 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="Testing script parameters")
     model = ModelParams(parser, sentinel=True)
     pipeline = PipelineParams(parser)
+    vp = VGGTParams(parser)
     parser.add_argument("--iteration", default=-1, type=int)
     parser.add_argument("--save_as", default="output_video", type=str)
+    parser.add_argument("--sync_mode", action="store_true", help="Use sorted training cameras directly for synchronized rendering")
+    parser.add_argument("--fps", default=10, type=int, help="Frames per second for the output video (default: 10)")
+    parser.add_argument("--force_rerender", action="store_true", help="Force 3D re-rendering even if PNG images exist in traj/renders")
     args = get_combined_args(parser)
-    print("Creating video for " + args.model_path)
-
-    dataset, pipe = model.extract(args), pipeline.extract(args)
-
-    triangles = TriangleModel(dataset.sh_degree)
-
-    triangles.load_parameters(os.path.join(args.model_path, "point_cloud/iteration_30000"), segment=False)
-
-    triangles.scaling = 4
-
-
-    scene = Scene(args=dataset,
-                  triangles=triangles,
-                  init_opacity=None,
-                  set_sigma=None,
-                  load_iteration=args.iteration,
-                  shuffle=False)
-
-
-
-    bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
-    background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
-
     traj_dir = os.path.join(args.model_path, 'traj')
     os.makedirs(traj_dir, exist_ok=True)
-
     render_path = os.path.join(traj_dir, "renders")
     os.makedirs(render_path, exist_ok=True)
     
-    n_frames = 240*5
-    cam_traj = generate_path(scene.getTrainCameras(), n_frames=n_frames)
+    existing_frames = [f for f in sorted(os.listdir(render_path)) if f.endswith(('.png', '.jpg', '.jpeg'))]
 
-    
-    with torch.no_grad():
-        for idx, view in enumerate(tqdm(cam_traj, desc="Rendering progress")):
-            rendering = render(view, triangles, pipe, background)
-            gt = view.original_image[0:3, :, :]
-            torchvision.utils.save_image(rendering["render"], os.path.join(traj_dir, "renders", '{0:05d}'.format(idx) + ".png"))
+    if len(existing_frames) > 0 and not args.force_rerender:
+        print(f"📦 Reusing {len(existing_frames)} pre-rendered PNG frames from '{render_path}'. Fast-stitching video at {args.fps} FPS...")
+    else:
+        dataset, pipe, vps = model.extract(args), pipeline.extract(args), vp.extract(args)
 
-            """render_normal  = rendering['surf_normal']
-            render_normal_np = render_normal.cpu().detach().numpy()
-            global_min = render_normal_np.min()
-            global_max = render_normal_np.max()
-            render_normal_np = (render_normal_np - global_min) / (global_max - global_min)
-            render_normal_np = np.transpose(render_normal_np, (1, 2, 0))  # HWC format
-            render_normal_np = (render_normal_np * 255).astype(np.uint8)
-            image_normal = Image.fromarray(render_normal_np)
-            plt.imsave(os.path.join(traj_dir, "renders", '{0:05d}'.format(idx) + ".png"), image_normal)"""
-            
+        triangles = TriangleModel(dataset.sh_degree)
+
+        triangles.load_parameters(os.path.join(args.model_path, f"point_cloud/iteration_{args.iteration}"), segment=False)
+
+        triangles.scaling = 4
+
+        scene = Scene(dataset,
+                      triangles,
+                      None,
+                      None,
+                      load_iteration=args.iteration,
+                      shuffle=False,
+                      vggt_args=vps)
+
+        bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
+        background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
+
+        if os.path.exists(render_path):
+            import shutil
+            shutil.rmtree(render_path)
+        os.makedirs(render_path, exist_ok=True)
+
+        if args.sync_mode:
+            cam_traj = sorted(scene.getTrainCameras(), key=lambda c: c.image_name)
+        else:
+            n_frames = 240*5
+            cam_traj = generate_path(scene.getTrainCameras(), n_frames=n_frames)
+
+        with torch.no_grad():
+            for idx, view in enumerate(tqdm(cam_traj, desc="Rendering progress")):
+                rendering = render(view, triangles, pipe, background)
+                torchvision.utils.save_image(rendering["render"], os.path.join(traj_dir, "renders", '{0:05d}'.format(idx) + ".png"))
+
     image_folder = os.path.join(traj_dir, "renders")
-    output_video = args.save_as + '.mp4'
+    if os.path.isabs(args.save_as):
+        output_video = args.save_as
+    else:
+        output_video = os.path.join(args.model_path, args.save_as)
+    if not output_video.endswith('.mp4'):
+        output_video += '.mp4'
+    os.makedirs(os.path.dirname(output_video), exist_ok=True)
 
     # Get all image files sorted by name
     images = [img for img in sorted(os.listdir(image_folder)) if img.endswith(('.png', '.jpg', '.jpeg'))]
@@ -138,9 +144,9 @@ if __name__ == "__main__":
     first_image = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = first_image.shape
 
-    # Create video writer (FPS = 30)
+    # Create video writer with specified FPS (default 10)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video = cv2.VideoWriter(output_video, fourcc, 30, (width, height))
+    video = cv2.VideoWriter(output_video, fourcc, args.fps, (width, height))
 
     # Write each image to the video
     for img_name in images:

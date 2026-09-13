@@ -20,6 +20,7 @@
 
 import os
 import torch
+import torchvision
 from random import randint
 from utils.loss_utils import l1_loss, ssim, vertex_depth_loss_hr
 from triangle_renderer import render
@@ -30,12 +31,19 @@ import uuid
 from tqdm import tqdm
 from utils.image_utils import psnr
 from argparse import ArgumentParser, Namespace
-from arguments import ModelParams, PipelineParams, OptimizationParams, update_indoor
+from arguments import ModelParams, PipelineParams, OptimizationParams, VGGTParams, update_indoor
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True
 except ImportError:
     TENSORBOARD_FOUND = False
+
+try:
+    import wandb
+    WANDB_FOUND = True
+except ImportError:
+    WANDB_FOUND = False
+
 import lpips
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
@@ -65,16 +73,27 @@ def training(
         checkpoint, 
         debug_from,
         scene_name,
-        use_sparse_adam=False
+        use_sparse_adam=False,
+        wandb_name=None,
+        vggt_args=None
         ):
     
     first_iter = 0
-    tb_writer = prepare_output_and_logger(dataset)
+    tb_writer = prepare_output_and_logger(dataset, wandb_name)
+    
+    if vggt_args is not None and WANDB_FOUND and wandb.run is not None:
+        wandb.config.update({
+            "vggt/vggt_mode": vggt_args.vggt_mode,
+        })
 
     # Load parameters, triangles and scene
     triangles = TriangleModel(dataset.sh_degree)
+    scene = Scene(dataset, triangles, opt.set_weight, opt.set_sigma, vggt_args=vggt_args)
 
-    scene = Scene(dataset, triangles, opt.set_weight, opt.set_sigma)
+    if WANDB_FOUND:
+        wandb.log({
+            "iteration": first_iter
+        }, step=first_iter)
 
     triangles.training_setup(opt, opt.feature_lr, opt.weight_lr, opt.lr_triangles_points_init)
     triangles.add_percentage = opt.add_percentage
@@ -120,6 +139,8 @@ def training(
     run_restricted_delaunay = opt.densify_until_iter + 1000
 
     depth_l1_weight = get_expon_lr_func(opt.depth_lambda_init, opt.depth_lambda_final, max_steps=opt.iterations)
+    
+    last_test_metrics = {}
 
     for iteration in range(first_iter, opt.iterations + 1):
 
@@ -281,9 +302,40 @@ def training(
             if iteration == opt.iterations:
                 progress_bar.close()
 
-            # Log and save
-            
-            training_report(tb_writer, scene_name, iteration, pixel_loss, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
+            extra_metrics = {}
+            if WANDB_FOUND:
+                extra_metrics["system/gpu_vram_allocated_gb"] = torch.cuda.memory_allocated() / (1024 * 1024 * 1024)
+                extra_metrics["train/loss_depth_l1"] = Ll1depth.item() if isinstance(Ll1depth, torch.Tensor) else Ll1depth
+                extra_metrics["train/loss_vertex_depth_hr"] = Lvertex_depth.item() if isinstance(Lvertex_depth, torch.Tensor) else Lvertex_depth
+                extra_metrics["train/loss_normal"] = Lnormal.item() if isinstance(Lnormal, torch.Tensor) else Lnormal
+
+            test_metrics = training_report(tb_writer, scene_name, iteration, pixel_loss, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background), args.model_path, extra_metrics=extra_metrics)
+            if test_metrics:
+                last_test_metrics = test_metrics
+
+            if iteration % 300 == 0:
+                if WANDB_FOUND:
+                    mask_out = triangles.vertices.shape[0]
+                    vertex_weights = triangles.opacity_activation(triangles.get_vertex_weight[:mask_out])
+                    opacity_mean = vertex_weights.mean().item()
+                    opacity_max = vertex_weights.max().item()
+                    opacity_min = vertex_weights.min().item()
+                    opacity_saturation_pct = (vertex_weights > 0.99).float().mean().item() * 100.0
+                    
+                    tri_count = triangles._triangle_indices.shape[0] if hasattr(triangles, '_triangle_indices') else 0
+                    vert_count = triangles.vertices.shape[0]
+                    vertex_sharing_ratio = (tri_count * 3) / vert_count if vert_count > 0 else 0
+                    
+                    wandb.log({
+                        "geometry/vertex_count": vert_count,
+                        "geometry/triangle_count": tri_count,
+                        "geometry/opacity_mean": opacity_mean,
+                        "geometry/opacity_max": opacity_max,
+                        "geometry/opacity_min": opacity_min,
+                        "geometry/opacity_saturation_pct": opacity_saturation_pct,
+                        "geometry/vertex_sharing_ratio": vertex_sharing_ratio,
+                        "iteration": iteration
+                    }, step=iteration)
 
             # Handle pruning operations
             if iteration % 500 == 0 and iteration < run_restricted_delaunay:
@@ -302,11 +354,31 @@ def training(
 
                 if number_of_training_views < 500: # only delete if the number of views are below 500. Otherwise, we might delete too much
                     delete_mask = delete_mask | mask_importance
+                
+                if opt.context_adaptive_gradient_verification:
+                    consistency = triangles.get_gradient_consistency()
+                    if consistency is not None:
+                        tri_consistency = consistency[triangles._triangle_indices].mean(dim=1)
+                        if tri_consistency.numel() > 0:
+                            # Only prune if consistency is below 0.1, AND don't prune more than 10% of the scene
+                            thresh = torch.quantile(tri_consistency, 0.1).clamp(max=0.1)
+                            mask_consistency_low = (tri_consistency < thresh).squeeze()
+                            delete_mask = delete_mask | mask_consistency_low
 
                 keep_mask   = ~delete_mask 
 
+                if WANDB_FOUND:
+                    tri_count_before_prune = triangles._triangle_indices.shape[0] if hasattr(triangles, '_triangle_indices') else 0
+
                 if iteration > opt.start_pruning:
                     triangles.prune_triangles(keep_mask)
+                    
+                if WANDB_FOUND:
+                    tri_count_after_prune = triangles._triangle_indices.shape[0] if hasattr(triangles, '_triangle_indices') else 0
+                    if tri_count_before_prune > 0:
+                        prune_removed_pct = (tri_count_before_prune - tri_count_after_prune) / tri_count_before_prune * 100.0
+                    else:
+                        prune_removed_pct = 0.0
              
                 # We prune vertices that are no longer used
                 device = triangles.vertices.device
@@ -333,7 +405,31 @@ def training(
                                      iteration > opt.densify_from_iter)
                 
                 if needs_densification:
-                    triangles.add_new_gs(iteration, cap_max=opt.max_points, splitt_large_triangles=splitt_large_triangles)
+                    if WANDB_FOUND:
+                        tri_count_before_densify = triangles._triangle_indices.shape[0] if hasattr(triangles, '_triangle_indices') else 0
+
+                    effective_max_points = opt.max_points
+                    if vggt_args is not None and vggt_args.vggt_mode:
+                        effective_max_points = float('inf')  # Uncapped max points in VGGT mode
+
+                    triangles.add_new_gs(iteration, cap_max=effective_max_points, splitt_large_triangles=splitt_large_triangles, context_adaptive_gradient_verification=opt.context_adaptive_gradient_verification)
+                    
+                    if WANDB_FOUND:
+                        tri_count_after_densify = triangles._triangle_indices.shape[0] if hasattr(triangles, '_triangle_indices') else 0
+                        if tri_count_before_densify > 0:
+                            densify_added_pct = (tri_count_after_densify - tri_count_before_densify) / tri_count_before_densify * 100.0
+                        else:
+                            densify_added_pct = 0.0
+                else:
+                    if WANDB_FOUND:
+                        densify_added_pct = 0.0
+                        
+                if WANDB_FOUND:
+                    wandb.log({
+                        "geometry/prune_removed_pct": prune_removed_pct,
+                        "geometry/densify_added_pct": densify_added_pct,
+                        "iteration": iteration
+                    }, step=iteration)
    
 
                 if iteration > opt.start_opacity_floor:
@@ -393,10 +489,47 @@ def training(
     vertex_mask = used_vertex_mask
     triangles._prune_vertices(vertex_mask)
 
+    if WANDB_FOUND:
+        final_tri_count = triangles._triangle_indices.shape[0] if hasattr(triangles, '_triangle_indices') else 0
+        final_vert_count = triangles.vertices.shape[0]
+        final_vertex_sharing_ratio = (final_tri_count * 3) / final_vert_count if final_vert_count > 0 else 0
+        
+        mask_out = triangles.vertices.shape[0]
+        if mask_out > 0:
+            vertex_weights = triangles.opacity_activation(triangles.get_vertex_weight[:mask_out])
+            opacity_mean = vertex_weights.mean().item()
+            opacity_max = vertex_weights.max().item()
+            opacity_min = vertex_weights.min().item()
+            opacity_saturation_pct = (vertex_weights > 0.99).float().mean().item() * 100.0
+        else:
+            opacity_mean = opacity_max = opacity_min = opacity_saturation_pct = 0.0
+        
+        wandb.log({
+            "geometry/final_vertex_count": final_vert_count,
+            "geometry/final_triangle_count": final_tri_count,
+        }, step=iteration)
+        
+        wandb.run.summary["final_triangle_count"] = final_tri_count
+        wandb.run.summary["final_vertex_count"] = final_vert_count
+        wandb.run.summary["geometry/vertex_count"] = final_vert_count
+        wandb.run.summary["geometry/triangle_count"] = final_tri_count
+        wandb.run.summary["final_vertex_sharing_ratio"] = final_vertex_sharing_ratio
+        wandb.run.summary["final_opacity_mean"] = opacity_mean
+        wandb.run.summary["final_opacity_max"] = opacity_max
+        wandb.run.summary["final_opacity_min"] = opacity_min
+        wandb.run.summary["final_opacity_saturation_pct"] = opacity_saturation_pct
+        wandb.run.summary["max_vram_gb"] = torch.cuda.max_memory_allocated() / (1024 * 1024 * 1024)
+        if last_test_metrics:
+            wandb.run.summary["final_psnr"] = last_test_metrics.get('psnr')
+            wandb.run.summary["final_ssim"] = last_test_metrics.get('ssim')
+            wandb.run.summary["final_lpips"] = last_test_metrics.get('lpips')
+            wandb.run.summary["final_l1_loss"] = last_test_metrics.get('l1_loss')
+            wandb.run.summary["final_fps"] = last_test_metrics.get('fps')
+
     scene.save(iteration)          
     print("Training is done")
 
-def prepare_output_and_logger(args):    
+def prepare_output_and_logger(args, wandb_name=None):    
     if not args.model_path:
         if os.getenv('OAR_JOB_ID'):
             unique_str=os.getenv('OAR_JOB_ID')
@@ -416,16 +549,41 @@ def prepare_output_and_logger(args):
         tb_writer = SummaryWriter(args.model_path)
     else:
         print("Tensorboard not available: not logging progress")
+        
+    if WANDB_FOUND:
+        wandb.init(entity="HiLite-4D", project="HiLite-4D-MeshSplatting", name=wandb_name, config=vars(args))
+        # Save WandB run ID for later metrics logging
+        with open(os.path.join(args.model_path, "wandb_id.txt"), "w") as f:
+            f.write(wandb.run.id)
+        # Explicitly tell wandb to use 'step' as the x-axis for all metrics
+        wandb.define_metric("iteration")
+        wandb.define_metric("train/*", step_metric="iteration")
+        wandb.define_metric("test/*", step_metric="iteration")
+        wandb.define_metric("geometry/*", step_metric="iteration")
+    else:
+        print("WandB not available: not logging to wandb")
+        
     return tb_writer
 
-def training_report(tb_writer, scene_name, iteration, pixel_loss, loss, loss_fn, elapsed, testing_iterations, scene : Scene, renderFunc, renderArgs):
+def training_report(tb_writer, scene_name, iteration, pixel_loss, loss, loss_fn, elapsed, testing_iterations, scene : Scene, renderFunc, renderArgs, model_path=".", extra_metrics=None):
+    final_test_metrics = {}
     if tb_writer:
         tb_writer.add_scalar('train_loss_patches/pixel_loss', pixel_loss.item(), iteration)
         tb_writer.add_scalar('train_loss_patches/total_loss', loss.item(), iteration)
         tb_writer.add_scalar('iter_time', elapsed, iteration)
+    if WANDB_FOUND:
+        log_dict = {
+            'train/pixel_loss': pixel_loss.item(),
+            'train/total_loss': loss.item(),
+            'train/iter_time': elapsed,
+            'iteration': iteration
+        }
+        if extra_metrics is not None:
+            log_dict.update(extra_metrics)
+        wandb.log(log_dict, step=iteration)
 
     # Report test and samples of training set
-    if iteration % 1000 == 0:
+    if iteration % 300 == 0:
         torch.cuda.empty_cache()
         validation_configs = ({'name': 'test', 'cameras' : scene.getTestCameras()}, 
                               {'name': 'train', 'cameras' : [scene.getTrainCameras()[idx % len(scene.getTrainCameras())] for idx in range(5, 30, 5)]})
@@ -437,17 +595,57 @@ def training_report(tb_writer, scene_name, iteration, pixel_loss, loss, loss_fn,
                 ssim_test = 0.0
                 lpips_test = 0.0
                 total_time = 0.0
+                
+                wandb_test_images = []
+                wandb_normal_maps = []
+                
                 for idx, viewpoint in enumerate(config['cameras']):
                     start_event = torch.cuda.Event(enable_timing=True)
                     end_event = torch.cuda.Event(enable_timing=True)
                     start_event.record()
-                    image = torch.clamp(renderFunc(viewpoint, scene.triangles, *renderArgs)["render"], 0.0, 1.0)
+                    
+                    render_pkg = renderFunc(viewpoint, scene.triangles, *renderArgs)
+                    image = torch.clamp(render_pkg["render"], 0.0, 1.0)
+                    
                     end_event.record()
                     torch.cuda.synchronize()
                     runtime = start_event.elapsed_time(end_event)
                     total_time += runtime
 
                     gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
+                    
+                    # Save fixed progress video frames
+                    if config['name'] == 'test' and idx < 5:
+                        progress_dir = os.path.join(model_path, "progress", f"view_{idx}")
+                        os.makedirs(progress_dir, exist_ok=True)
+                        torchvision.utils.save_image(image, os.path.join(progress_dir, f"iter_{iteration:05d}.png"))
+                        
+                        if WANDB_FOUND:
+                            rgb_vis = image.detach().cpu().permute(1, 2, 0).numpy()
+                            error_map = torch.abs(image - gt_image).mean(dim=0).detach().cpu().numpy()
+                            depth_vis = render_pkg["surf_depth"].detach().squeeze(0).cpu().numpy()
+                            depth_vis = depth_vis / (depth_vis.max() + 1e-6)
+                            
+                            fig, axs = plt.subplots(1, 3, figsize=(12, 4))
+                            axs[0].imshow(rgb_vis)
+                            axs[0].set_title("RGB")
+                            axs[0].axis("off")
+                            axs[1].imshow(depth_vis, cmap='plasma')
+                            axs[1].set_title("Depth")
+                            axs[1].axis("off")
+                            axs[2].imshow(error_map, cmap='magma')
+                            axs[2].set_title("Error")
+                            axs[2].axis("off")
+                            fig.tight_layout()
+                            
+                            wandb_test_images.append(wandb.Image(fig, caption=f"View {idx}"))
+                            plt.close(fig)
+                            
+                            if "rend_normal" in render_pkg:
+                                normal_map = render_pkg["rend_normal"].detach().cpu().permute(1, 2, 0).numpy()
+                                normal_vis = np.clip((normal_map + 1.0) / 2.0, 0.0, 1.0)
+                                wandb_normal_maps.append(wandb.Image(normal_vis, caption=f"View {idx} Normal"))
+                        
                     if tb_writer and (idx < 5):
                         tb_writer.add_images(config['name'] + "_view_{}/render".format(viewpoint.image_name), image[None], global_step=iteration)
                         if iteration == testing_iterations[0]:
@@ -465,14 +663,35 @@ def training_report(tb_writer, scene_name, iteration, pixel_loss, loss, loss_fn,
                 print("\n[ITER {}] Evaluating {}: L1 {} PSNR {} SSIM {} LPIPS {} FPS {}".format(iteration, config['name'], pixel_loss_test, psnr_test, ssim_test, lpips_test, fps))
 
                 if tb_writer:
-                    tb_writer.add_scalar(config['name'] + '/loss_viewpoint - l1_loss', pixel_loss_test, iteration)
-                    tb_writer.add_scalar(config['name'] + '/loss_viewpoint - psnr', psnr_test, iteration)
-
-                if tb_writer:
-                    tb_writer.add_scalar(config['name'] + '/loss_viewpoint - l1_loss', pixel_loss_test, iteration)
-                    tb_writer.add_scalar(config['name'] + '/loss_viewpoint - psnr', psnr_test, iteration)
+                    tb_writer.add_scalar(config['name'] + '/loss_viewpoint - l1_loss', pixel_loss_test.item() if hasattr(pixel_loss_test, 'item') else pixel_loss_test, iteration)
+                    tb_writer.add_scalar(config['name'] + '/loss_viewpoint - psnr', psnr_test.item() if hasattr(psnr_test, 'item') else psnr_test, iteration)
+                    
+                if WANDB_FOUND:
+                    log_dict = {
+                        f"{config['name']}/l1_loss": pixel_loss_test.item() if hasattr(pixel_loss_test, 'item') else pixel_loss_test,
+                        f"{config['name']}/psnr": psnr_test.item() if hasattr(psnr_test, 'item') else psnr_test,
+                        f"{config['name']}/ssim": ssim_test.item() if hasattr(ssim_test, 'item') else ssim_test,
+                        f"{config['name']}/lpips": lpips_test.item() if hasattr(lpips_test, 'item') else lpips_test,
+                        f"{config['name']}/fps": fps,
+                        "iteration": iteration
+                    }
+                    if config['name'] == 'test' and len(wandb_test_images) > 0:
+                        log_dict["media/test_images"] = wandb_test_images
+                    if config['name'] == 'test' and len(wandb_normal_maps) > 0:
+                        log_dict["media/normal_maps"] = wandb_normal_maps
+                        
+                    if config['name'] == 'test':
+                        final_test_metrics['psnr'] = psnr_test.item() if hasattr(psnr_test, 'item') else psnr_test
+                        final_test_metrics['ssim'] = ssim_test.item() if hasattr(ssim_test, 'item') else ssim_test
+                        final_test_metrics['lpips'] = lpips_test.item() if hasattr(lpips_test, 'item') else lpips_test
+                        final_test_metrics['l1_loss'] = pixel_loss_test.item() if hasattr(pixel_loss_test, 'item') else pixel_loss_test
+                        final_test_metrics['fps'] = fps
+                        
+                    wandb.log(log_dict, step=iteration)
 
         torch.cuda.empty_cache()
+    
+    return final_test_metrics
 
 if __name__ == "__main__":
     # Set up command line argument parser
@@ -480,6 +699,7 @@ if __name__ == "__main__":
     lp = ModelParams(parser)
     op = OptimizationParams(parser)
     pp = PipelineParams(parser)
+    vp = VGGTParams(parser)
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
     parser.add_argument("--test_iterations", nargs="+", type=int, default=[7_000, 30_000])
@@ -506,6 +726,7 @@ if __name__ == "__main__":
     lps = lp.extract(args)
     ops = op.extract(args)
     pps = pp.extract(args)
+    vps = vp.extract(args)
 
     if args.indoor:
         ops = update_indoor(ops)
@@ -519,7 +740,9 @@ if __name__ == "__main__":
              args.start_checkpoint,
              args.debug_from,
              args.scene_name,
-             use_sparse_adam=args.use_sparse_adam
+             use_sparse_adam=args.use_sparse_adam,
+             wandb_name=args.wandb_name,
+             vggt_args=vps
              )
     
     # All done

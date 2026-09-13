@@ -1,0 +1,189 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1640 720" width="1640" height="720">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .box { rx: 8px; ry: 8px; stroke-width: 2px; }
+      .box-input { fill: #e0f2fe; stroke: #0284c7; }
+      .box-scene { fill: #dcfce7; stroke: #16a34a; }
+      .box-render { fill: #fef9c3; stroke: #ca8a04; }
+      .box-opt { fill: #fee2e2; stroke: #dc2626; }
+      .box-app { fill: #f3e8ff; stroke: #9333ea; }
+      
+      .col-bg { fill: #ffffff; stroke: #e2e8f0; stroke-width: 2px; rx: 12px; }
+      
+      .title { font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: bold; fill: #334155; text-anchor: middle; }
+      .text-main { font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
+      .text-sub { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #475569; text-anchor: middle; }
+      
+      .arrow { fill: none; stroke: #94a3b8; stroke-width: 3px; }
+      .arrow-dashed { fill: none; stroke: #94a3b8; stroke-width: 3px; stroke-dasharray: 6 6; }
+      .arrow-red { fill: none; stroke: #ef4444; stroke-width: 3px; stroke-dasharray: 6 6; }
+      .arrow-label { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; fill: #475569; text-anchor: middle; }
+    </style>
+    <marker id="head" orient="auto" markerWidth="6" markerHeight="8" refX="5.5" refY="4">
+      <path d="M0,0 V8 L6,4 Z" fill="#94a3b8" />
+    </marker>
+    <marker id="head-red" orient="auto" markerWidth="6" markerHeight="8" refX="5.5" refY="4">
+      <path d="M0,0 V8 L6,4 Z" fill="#ef4444" />
+    </marker>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.05" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1640" height="720" class="bg" />
+
+  <!-- Columns Backgrounds -->
+  <rect x="40" y="40" width="280" height="640" class="col-bg" filter="url(#shadow)" />
+  <rect x="360" y="40" width="280" height="640" class="col-bg" filter="url(#shadow)" />
+  <rect x="680" y="40" width="280" height="640" class="col-bg" filter="url(#shadow)" />
+  <rect x="1000" y="40" width="280" height="640" class="col-bg" filter="url(#shadow)" />
+  <rect x="1320" y="40" width="280" height="640" class="col-bg" filter="url(#shadow)" />
+
+  <!-- Column Titles -->
+  <text x="180" y="80" class="title">1. Data Inputs</text>
+  <text x="500" y="80" class="title">2. Core Representation</text>
+  <text x="820" y="80" class="title">3. Rendering</text>
+  <text x="1140" y="80" class="title">4. Optimization &amp; Loss</text>
+  <text x="1460" y="80" class="title">5. Applications</text>
+
+  <!-- Nodes and Edges -->
+  <path d="M 290 340 C 340 340, 340 340, 390 340" class="arrow" marker-end="url(#head)" />
+        <rect x="290.0" y="330.0" width="100" height="20" fill="#ffffff" rx="4"/>
+        <text x="340.0" y="344.0" class="arrow-label">Init Mesh</text>
+        
+<path d="M 290 240 C 340 240, 340 320, 390 320" class="arrow-dashed" marker-end="url(#head)" />
+        <rect x="290.0" y="270.0" width="100" height="20" fill="#ffffff" rx="4"/>
+        <text x="340.0" y="284.0" class="arrow-label">Depth Priors</text>
+        
+<path d="M 500 305 L 500 175" class="arrow-dashed" marker-end="url(#head)" />
+<path d="M 500 375 L 500 505" class="arrow-dashed" marker-end="url(#head)" />
+<path d="M 290 540 C 340 540, 660 360, 710 360" class="arrow" marker-end="url(#head)" />
+        <rect x="450.0" y="440.0" width="100" height="20" fill="#ffffff" rx="4"/>
+        <text x="500.0" y="454.0" class="arrow-label">Viewpoint</text>
+        
+<path d="M 610 340 L 710 340" class="arrow" marker-end="url(#head)" />
+        <rect x="610.0" y="330.0" width="100" height="20" fill="#ffffff" rx="4"/>
+        <text x="660.0" y="344.0" class="arrow-label">Splat Params</text>
+        
+<path d="M 820 375 L 820 405" class="arrow" marker-end="url(#head)" />
+<path d="M 930 420 C 980 420, 980 160, 1030 160" class="arrow" marker-end="url(#head)" />
+        <rect x="930.0" y="280.0" width="100" height="20" fill="#ffffff" rx="4"/>
+        <text x="980.0" y="294.0" class="arrow-label">Render RGB</text>
+        
+<path d="M 290 140 C 660.0 60, 660.0 60, 1030 140" class="arrow" marker-end="url(#head)" />
+    <rect x="610.0" y="70" width="100" height="20" fill="#ffffff" rx="4"/>
+    <text x="660.0" y="84" class="arrow-label">GT RGB</text>
+    
+<path d="M 930 440 C 980 440, 980 240, 1030 240" class="arrow" marker-end="url(#head)" />
+        <rect x="930.0" y="330.0" width="100" height="20" fill="#ffffff" rx="4"/>
+        <text x="980.0" y="344.0" class="arrow-label">Render Depth</text>
+        
+<path d="M 290 240 L 1030 240" class="arrow" marker-end="url(#head)" />
+        <rect x="610.0" y="230.0" width="100" height="20" fill="#ffffff" rx="4"/>
+        <text x="660.0" y="244.0" class="arrow-label">GT Depth</text>
+        
+<path d="M 1140 175 L 1140 505" class="arrow" marker-end="url(#head)" />
+<path d="M 1140 275 L 1140 505" class="arrow" marker-end="url(#head)" />
+<path d="M 1140 575 L 1140 625 L 500 625 L 500 575" class="arrow-red" marker-end="url(#head-red)" />
+    <rect x="740.0" y="615" width="160" height="20" fill="#ffffff" rx="4"/>
+    <text x="820.0" y="629" class="arrow-label">Backprop &amp; Topology Update</text>
+    
+<path d="M 610 320 C 660 320, 1300 240, 1350 240" class="arrow" marker-end="url(#head)" />
+<path d="M 610 340 L 1350 340" class="arrow" marker-end="url(#head)" />
+        <rect x="930.0" y="330.0" width="100" height="20" fill="#ffffff" rx="4"/>
+        <text x="980.0" y="344.0" class="arrow-label">Trained Model</text>
+        
+<path d="M 610 360 C 660 360, 1300 440, 1350 440" class="arrow" marker-end="url(#head)" />
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="105" width="220" height="70" class="box box-input" />
+    <text x="180.0" y="132.0" class="text-main">📸 RGB Images</text>
+    <text x="180.0" y="160.0" class="text-sub">(Ground Truth)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="205" width="220" height="70" class="box box-input" />
+    <text x="180.0" y="232.0" class="text-main">📏 Depth Maps</text>
+    <text x="180.0" y="260.0" class="text-sub">(Depth Anything V2)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="305" width="220" height="70" class="box box-input" />
+    <text x="180.0" y="332.0" class="text-main">☁️ Sparse Point Cloud</text>
+    <text x="180.0" y="360.0" class="text-sub">(COLMAP / Blender)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="505" width="220" height="70" class="box box-input" />
+    <text x="180.0" y="545.0" class="text-main">🎥 Camera Poses</text>
+    
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="390" y="105" width="220" height="70" class="box box-scene" />
+    <text x="500.0" y="132.0" class="text-main">⚙️ Properties</text>
+    <text x="500.0" y="160.0" class="text-sub">Opacity, SH, Size, Scaling</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="390" y="305" width="220" height="70" class="box box-scene" />
+    <text x="500.0" y="332.0" class="text-main">🔺 TriangleModel</text>
+    <text x="500.0" y="360.0" class="text-sub">(scene/triangle_model.py)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="390" y="505" width="220" height="70" class="box box-scene" />
+    <text x="500.0" y="532.0" class="text-main">🔄 Dynamic Topology</text>
+    <text x="500.0" y="560.0" class="text-sub">Densify, Split, Delaunay</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="710" y="305" width="220" height="70" class="box box-render" />
+    <text x="820.0" y="332.0" class="text-main">🖥️ CUDA Rasterizer</text>
+    <text x="820.0" y="360.0" class="text-sub">(diff-triangle-mesh)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="710" y="405" width="220" height="70" class="box box-render" />
+    <text x="820.0" y="432.0" class="text-main">🖼️ Render Outputs</text>
+    <text x="820.0" y="460.0" class="text-sub">RGB, Depth, Normals, Masks</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1030" y="105" width="220" height="70" class="box box-opt" />
+    <text x="1140.0" y="132.0" class="text-main">📉 Photometric Loss</text>
+    <text x="1140.0" y="160.0" class="text-sub">(L1 + SSIM)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1030" y="205" width="220" height="70" class="box box-opt" />
+    <text x="1140.0" y="232.0" class="text-main">📉 Depth Regularization</text>
+    <text x="1140.0" y="260.0" class="text-sub">(vertex_depth_loss_hr)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1030" y="505" width="220" height="70" class="box box-opt" />
+    <text x="1140.0" y="532.0" class="text-main">🚀 Optimizer</text>
+    <text x="1140.0" y="560.0" class="text-sub">(SparseGaussianAdam)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1350" y="205" width="220" height="70" class="box box-app" />
+    <text x="1460.0" y="232.0" class="text-main">✨ Novel View Synthesis</text>
+    <text x="1460.0" y="260.0" class="text-sub">(eval.py)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1350" y="305" width="220" height="70" class="box box-app" />
+    <text x="1460.0" y="332.0" class="text-main">🕸️ Mesh Extraction</text>
+    <text x="1460.0" y="360.0" class="text-sub">(mesh.py + Open3D)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1350" y="405" width="220" height="70" class="box box-app" />
+    <text x="1460.0" y="432.0" class="text-main">🧩 Object Extraction</text>
+    <text x="1460.0" y="460.0" class="text-sub">(segmentation/ + SAM 2)</text>
+  </g>
+</svg>

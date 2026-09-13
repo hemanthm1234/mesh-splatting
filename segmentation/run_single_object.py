@@ -40,10 +40,10 @@ if __name__ == "__main__":
 
     triangles.upscaling_factor = 4
 
-    scene = Scene(args=dataset,
-                  triangles=triangles,
-                  init_opacity=None,
-                  set_sigma=None,
+    scene = Scene(dataset,
+                  triangles,
+                  None,
+                  None,
                   load_iteration=args.iteration,
                   shuffle=False, 
                   segment=True,

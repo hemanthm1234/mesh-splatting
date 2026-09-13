@@ -1,0 +1,7 @@
+# Ignore everything by default
+*
+
+# Only allow the files necessary to compile the environment
+!requirements-frozen.txt
+!compile.sh
+!submodules/

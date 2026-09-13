@@ -31,7 +31,7 @@ class Scene:
 
     triangles : TriangleModel
 
-    def __init__(self, args : ModelParams, triangles : TriangleModel, init_opacity, set_sigma, load_iteration=None, shuffle=True, resolution_scales=[1.0], segment=False, ratio_threshold=0.75):
+    def __init__(self, args : ModelParams, triangles : TriangleModel, init_opacity, set_sigma, load_iteration=None, shuffle=True, resolution_scales=[1.0], segment=False, ratio_threshold=0.75, vggt_args=None):
         """b
         :param path: Path to colmap scene main folder.
         """
@@ -49,13 +49,28 @@ class Scene:
         self.train_cameras = {}
         self.test_cameras = {}
 
-        if os.path.exists(os.path.join(args.source_path, "sparse")):
+        if vggt_args is not None and vggt_args.vggt_mode == "full_pipeline":
+            print("Running in VGGT Omega Full Pipeline mode!")
+            scene_info = sceneLoadTypeCallbacks["VGGT"](args.source_path, args.images, args.eval, vggt_ply_name=vggt_args.vggt_ply_name)
+        elif os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = sceneLoadTypeCallbacks["Colmap"](args.source_path, args.images, args.eval)
         elif os.path.exists(os.path.join(args.source_path, "transforms_train.json")):
             print("Found transforms_train.json file, assuming Blender data set!")
             scene_info = sceneLoadTypeCallbacks["Blender"](args.source_path, args.white_background, args.eval)
         else:
             assert False, "Could not recognize scene type!"
+
+        # ── DEPRECATED: DO NOT USE 'geometry_only' ─────────────────
+        # WARNING: 'geometry_only' mode attempts to align VGGT point clouds with COLMAP cameras via PCA.
+        # THIS IS UTTER NONSENSE AND IS STRICTLY DEPRECATED.
+        # ALL VGGT point clouds (including downsampled COLMAP-matched variants) MUST use native VGGT camera
+        # poses via '--vggt_mode full_pipeline'. Never attempt coordinate alignment between VGGT and COLMAP.
+        if not self.loaded_iter and vggt_args is not None and vggt_args.vggt_mode == "geometry_only":
+            raise ValueError(
+                "[DEPRECATED] --vggt_mode 'geometry_only' is invalid and must NEVER be used! "
+                "All VGGT datasets MUST be used with native VGGT cameras via '--vggt_mode full_pipeline'."
+            )
+        # ─────────────────────────────────────────────────────────────────────────────
 
         if not self.loaded_iter:
             with open(scene_info.ply_path, 'rb') as src_file, open(os.path.join(self.model_path, "input.ply") , 'wb') as dest_file:

@@ -50,13 +50,10 @@ if __name__ == "__main__":
     dataset, iteration, pipe = model.extract(args), args.iteration, pipeline.extract(args)
     triangles = TriangleModel(dataset.sh_degree)
 
-    scene = Scene(args=dataset,
-                  triangles=triangles,
-                  init_opacity=None,
-                  init_size=None,
-                  nb_points=None,
-                  set_sigma=None,
-                  no_dome=False,
+    scene = Scene(dataset,
+                  triangles,
+                  None,
+                  None,
                   load_iteration=args.iteration,
                   shuffle=False)
 

@@ -23,6 +23,11 @@
 
 ⭐️ This repo contains the official implementation for the paper "MeshSplatting: Differentiable Rendering with Opaque Meshes". ⭐️
 
+## Architecture Overview
+
+<div align="center">
+  <img src="assets/architecture.svg" alt="MeshSplatting Architecture Pipeline">
+</div>
 
 ## Cloning the Repository + Installation
 

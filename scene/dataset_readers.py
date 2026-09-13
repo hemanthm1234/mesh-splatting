@@ -359,7 +359,190 @@ def readNerfSyntheticInfo(path, white_background, eval, extension=".png"):
                            ply_path=ply_path)
     return scene_info
 
+def load_vggt_omega_pcd(source_path: str, vggt_ply_name: str = "vggt_omega_10M.ply") -> BasicPointCloud:
+    """
+    Loads the pre-generated VGGT Omega point cloud from the convention path:
+        <source_path>/vggt_omega/<vggt_ply_name>
+    Raises FileNotFoundError if the file does not exist.
+    Returns a BasicPointCloud aligned to COLMAP world space.
+    """
+    vggt_ply_path = os.path.join(source_path, "vggt_omega", vggt_ply_name)
+    if not os.path.exists(vggt_ply_path):
+        raise FileNotFoundError(
+            f"[VGGT Omega Init] PLY file not found at: '{vggt_ply_path}'.\n"
+            f"Please ensure the file exists."
+        )
+    print(f"[VGGT Omega Init] Loading VGGT Omega point cloud from: {vggt_ply_path}")
+    pcd = fetchPly(vggt_ply_path)
+    print(f"[VGGT Omega Init] Loaded {pcd.points.shape[0]:,} points from VGGT Omega PLY.")
+    return pcd
+
+def align_vggt_to_colmap(
+    vggt_pcd: BasicPointCloud,
+    colmap_pcd: BasicPointCloud,
+) -> BasicPointCloud:
+    """
+    [DEPRECATED - DO NOT USE]
+    WARNING: Attempting to align VGGT point clouds to COLMAP coordinate space via PCA/ICP is utter nonsense.
+    ALL VGGT models must be rendered and trained using native VGGT camera poses via '--vggt_mode full_pipeline'.
+    Do NOT call this function under any circumstances.
+    """
+    raise RuntimeError(
+        "[DEPRECATED] align_vggt_to_colmap() is invalid and must NEVER be called! "
+        "VGGT datasets MUST ALWAYS be used with native VGGT cameras via '--vggt_mode full_pipeline'."
+    )
+    vggt_pts = np.asarray(vggt_pcd.points)
+    colmap_pts = np.asarray(colmap_pcd.points)
+
+    # 1. Translation
+    vggt_centroid  = vggt_pts.mean(axis=0)
+    colmap_centroid = colmap_pts.mean(axis=0)
+
+    vggt_centered  = vggt_pts - vggt_centroid
+    colmap_centered = colmap_pts - colmap_centroid
+
+    # 2. Rotation (PCA)
+    cov_vggt = np.cov(vggt_centered, rowvar=False)
+    cov_colmap = np.cov(colmap_centered, rowvar=False)
+
+    U_vggt, _, _ = np.linalg.svd(cov_vggt)
+    U_colmap, _, _ = np.linalg.svd(cov_colmap)
+
+    # Project to principal axes to compute skewness
+    vggt_proj = vggt_centered @ U_vggt
+    colmap_proj = colmap_centered @ U_colmap
+
+    vggt_skew = np.mean(vggt_proj**3, axis=0)
+    colmap_skew = np.mean(colmap_proj**3, axis=0)
+
+    # Resolve sign ambiguity using 3rd moment (skewness)
+    for i in range(3):
+        # If skewness signs don't match, flip the eigenvector
+        if np.sign(vggt_skew[i]) != np.sign(colmap_skew[i]) and abs(vggt_skew[i]) > 1e-8:
+            U_vggt[:, i] *= -1
+
+    # R maps VGGT axes to COLMAP axes
+    R = U_colmap @ U_vggt.T
+    
+    # Ensure R is a proper rotation matrix (no reflection)
+    if np.linalg.det(R) < 0:
+        # Fallback reflection correction if skewness was too noisy on the smallest axis
+        U_colmap[:, -1] *= -1
+        R = U_colmap @ U_vggt.T
+
+    vggt_rotated = vggt_centered @ R.T
+
+    # 3. Scale
+    vggt_rms  = np.sqrt((vggt_rotated ** 2).sum(axis=1).mean())
+    colmap_rms = np.sqrt((colmap_centered ** 2).sum(axis=1).mean())
+
+    if vggt_rms < 1e-8:
+        scale_factor = 1.0
+    else:
+        scale_factor = colmap_rms / vggt_rms
+
+    aligned_pts = vggt_rotated * scale_factor + colmap_centroid
+
+    print(f"[VGGT Omega Init] Alignment: centroid shift={colmap_centroid - vggt_centroid}, "
+          f"scale_factor={scale_factor:.4f}")
+    print(f"[VGGT Omega Init] Applied Rotation Matrix:\n{R}")
+
+    return BasicPointCloud(
+        points=aligned_pts.astype(np.float32),
+        colors=np.asarray(vggt_pcd.colors).astype(np.float32),
+        normals=np.asarray(vggt_pcd.normals).astype(np.float32),
+    )
+
+def readVGGTSceneInfo(path, images, eval, llffhold=8, aug=False, vggt_ply_name="vggt_omega_10M.ply"):
+    vggt_dir = os.path.join(path, "vggt_omega")
+    cameras_file = os.path.join(vggt_dir, "cameras.json")
+    with open(cameras_file, 'r') as f:
+        cam_data = json.load(f)
+        
+    image_names = cam_data['image_names']
+    extrinsics = np.array(cam_data['extrinsics'])
+    intrinsics = np.array(cam_data['intrinsics'])
+    
+    depths_params = None
+    depth_params_file = os.path.join(vggt_dir, "depth_params.json")
+    if os.path.exists(depth_params_file):
+        with open(depth_params_file, 'r') as f:
+            depths_params = json.load(f)
+        all_scales = np.array([depths_params[key]["scale"] for key in depths_params if "scale" in depths_params[key]])
+        if len(all_scales) > 0 and (all_scales > 0).sum():
+            med_scale = np.median(all_scales[all_scales > 0])
+        else:
+            med_scale = 0
+        for key in depths_params:
+            depths_params[key]["med_scale"] = med_scale
+            
+    cam_infos = []
+    images_folder = os.path.join(path, images)
+    depths_folder = os.path.join(path, "depth")
+    
+    for idx, (img_name, ext, intr) in enumerate(zip(image_names, extrinsics, intrinsics)):
+        R = np.transpose(ext[:3, :3])
+        T = ext[:3, 3]
+        
+        fx = intr[0, 0]
+        fy = intr[1, 1]
+        
+        image_path = os.path.join(images_folder, img_name)
+        image = Image.open(image_path)
+        width, height = image.size
+        
+        cx = intr[0, 2]
+        cy = intr[1, 2]
+        
+        pred_width = cx * 2.0
+        pred_height = cy * 2.0
+        
+        FovX = focal2fov(fx, pred_width)
+        FovY = focal2fov(fy, pred_height)
+        
+        n_remove = len(img_name.split('.')[-1]) + 1
+        key_no_ext = img_name[:-n_remove]
+        depth_params = depths_params.get(key_no_ext) if depths_params else None
+        depth_path = os.path.join(depths_folder, f"{key_no_ext}.png") if os.path.isdir(depths_folder) else ""
+        
+        normal_dir  = images_folder.replace("images", "normals")
+        normal_path = os.path.join(normal_dir, key_no_ext + ".png")
+        normal = None
+        if os.path.exists(normal_path):
+            normal_image = Image.open(normal_path).convert("RGB")
+            normal_np = np.array(normal_image).astype(np.float32) / 255.0
+            normal = (normal_np * 2.0) - 1.0
+
+        cam_info = CameraInfo(
+            uid=idx, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+            image_path=image_path, image_name=key_no_ext, width=width, height=height,
+            normal_map=normal, depth_params=depth_params, depth_path=depth_path
+        )
+        cam_infos.append(cam_info)
+        
+    cam_infos = sorted(cam_infos, key=lambda x: x.image_name)
+    if eval:
+        train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 0]
+        test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 0]
+    else:
+        train_cam_infos = cam_infos
+        test_cam_infos = []
+        
+    nerf_normalization = getNerfppNorm(train_cam_infos)
+    ply_path = os.path.join(vggt_dir, vggt_ply_name)
+    if not os.path.exists(ply_path):
+        raise FileNotFoundError(
+            f"[VGGT Omega Init] PLY file not found at: '{ply_path}'.\n"
+            f"Please ensure the file exists."
+        )
+    print(f"[VGGT Omega Init] Loading VGGT Omega point cloud from: {ply_path}")
+    pcd = fetchPly(ply_path)
+    
+    return SceneInfo(point_cloud=pcd, train_cameras=train_cam_infos, test_cameras=test_cam_infos,
+                     nerf_normalization=nerf_normalization, ply_path=ply_path)
+
 sceneLoadTypeCallbacks = {
     "Colmap": readColmapSceneInfo,
+    "VGGT": readVGGTSceneInfo,
     "Blender" : readNerfSyntheticInfo
 }

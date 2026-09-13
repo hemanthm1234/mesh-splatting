@@ -143,8 +143,19 @@ class OptimizationParams(ParamGroup):
 
         self.depth_lambda_init = 0.01
         self.depth_lambda_final = 0.001
+        
+        self.context_adaptive_gradient_verification = False
 
         super().__init__(parser, "Optimization Parameters")
+
+class VGGTParams(ParamGroup):
+    def __init__(self, parser):
+        # NOTE: self.vggt_mode MUST be "full_pipeline".
+        # WARNING: The legacy "geometry_only" mode is utter nonsense and deprecated.
+        # ALL VGGT point clouds must be trained and rendered using native VGGT cameras via "full_pipeline".
+        self.vggt_mode = ""
+        self.vggt_ply_name = "vggt_omega_10M.ply"
+        super().__init__(parser, "VGGT Omega Init Parameters")
 
 def get_combined_args(parser : ArgumentParser):
     cmdlne_string = sys.argv[1:]

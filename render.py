@@ -47,10 +47,10 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
     with torch.no_grad():
         triangles = TriangleModel(dataset.sh_degree)
         triangles.scaling = 4
-        scene = Scene(args=dataset,
-                  triangles=triangles,
-                  init_opacity=None,
-                  set_sigma=None,
+        scene = Scene(dataset,
+                  triangles,
+                  None,
+                  None,
                   load_iteration=iteration,
                   shuffle=False)
 

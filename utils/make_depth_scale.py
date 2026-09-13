@@ -56,8 +56,12 @@ def get_scales(key, cameras, images, points3d_ordered, args):
 
         t_mono = np.median(invmonodepth)
         s_mono = np.mean(np.abs(invmonodepth - t_mono))
-        scale = s_colmap / s_mono
-        offset = t_colmap - t_mono * scale
+        if s_mono > 1e-6:
+            scale = float(s_colmap / s_mono)
+            offset = float(t_colmap - t_mono * scale)
+        else:
+            scale = 0.0
+            offset = 0.0
     else:
         scale = 0
         offset = 0

@@ -257,7 +257,7 @@ class GaussianExtractor(object):
         print(f"Define the voxel_size as {voxel_size}")
         sdf_function = lambda x: compute_unbounded_tsdf(x, inv_contraction, voxel_size)
         from utils.mcube_utils import marching_cubes_with_contraction
-        R = contract(normalize(self.gaussians.get_xyz)).norm(dim=-1).cpu().numpy()
+        R = contract(normalize(self.gaussians.vertices.detach())).norm(dim=-1).cpu().numpy()
         R = np.quantile(R, q=0.95)
         R = min(R+0.01, 1.9)
 
@@ -272,10 +272,15 @@ class GaussianExtractor(object):
         
         # coloring the mesh
         torch.cuda.empty_cache()
-        mesh = mesh.as_open3d
+        o3d_mesh = o3d.geometry.TriangleMesh()
+        o3d_mesh.vertices = o3d.utility.Vector3dVector(np.asarray(mesh.vertices).astype(np.float64).copy())
+        o3d_mesh.triangles = o3d.utility.Vector3iVector(np.asarray(mesh.faces).astype(np.int32).copy())
+        if hasattr(mesh, 'vertex_normals') and mesh.vertex_normals is not None and len(mesh.vertex_normals) > 0:
+            o3d_mesh.vertex_normals = o3d.utility.Vector3dVector(np.asarray(mesh.vertex_normals).astype(np.float64).copy())
+        mesh = o3d_mesh
         print("texturing mesh ... ")
-        _, rgbs = compute_unbounded_tsdf(torch.tensor(np.asarray(mesh.vertices)).float().cuda(), inv_contraction=None, voxel_size=voxel_size, return_rgb=True)
-        mesh.vertex_colors = o3d.utility.Vector3dVector(rgbs.cpu().numpy())
+        _, rgbs = compute_unbounded_tsdf(torch.tensor(np.asarray(mesh.vertices).copy()).float().cuda(), inv_contraction=None, voxel_size=voxel_size, return_rgb=True)
+        mesh.vertex_colors = o3d.utility.Vector3dVector(rgbs.cpu().numpy().astype(np.float64).copy())
         return mesh
 
     @torch.no_grad()

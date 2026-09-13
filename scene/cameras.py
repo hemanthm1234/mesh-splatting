@@ -67,9 +67,11 @@ class Camera(nn.Module):
             self.depth_reliable = True
 
             if depth_params is not None:
-                if depth_params["scale"] < 0.2 * depth_params["med_scale"] or depth_params["scale"] > 5 * depth_params["med_scale"]:
-                    self.depth_reliable = False
-                    self.depth_mask *= 0
+                med_scale = depth_params.get("med_scale", None)
+                if med_scale is not None and med_scale > 0:
+                    if depth_params["scale"] < 0.2 * med_scale or depth_params["scale"] > 5 * med_scale:
+                        self.depth_reliable = False
+                        self.depth_mask *= 0
                 
                 if depth_params["scale"] > 0:
                     self.invdepthmap = self.invdepthmap * depth_params["scale"] + depth_params["offset"]

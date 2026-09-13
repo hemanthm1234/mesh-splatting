@@ -1,0 +1,11 @@
+FROM nvidia/cuda:13.2.0-devel-ubuntu22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y python3.11 python3.11-venv python3-pip git
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python
+ENV VIRTUAL_ENV=/opt/venv
+RUN python -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN pip install --no-cache-dir -U pip setuptools==69.5.1 wheel ninja packaging pybind11
+RUN which python && python --version
+RUN python -c 'import pkg_resources; print("pkg_resources found at", pkg_resources.__file__)'
+RUN git clone --branch v2.2.0 https://github.com/open-mmlab/mmcv.git /tmp/mmcv && cd /tmp/mmcv && python setup.py bdist_wheel || echo "FAILED"

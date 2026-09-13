@@ -769,7 +769,35 @@ class TriangleModel:
             sampled_idxs = alive_indices[sampled_idxs]
         return sampled_idxs        
 
-    def add_new_gs(self, iteration, cap_max, splitt_large_triangles):
+    def get_gradient_consistency(self):
+        """
+        Computes the gradient consistency score for each vertex based on Adam's exp_avg and exp_avg_sq.
+        Returns a tensor of shape [V] with scores in [0, 1].
+        If optimizer state is not initialized for vertices, returns None.
+        """
+        if self.optimizer is None:
+            return None
+        
+        for group in self.optimizer.param_groups:
+            if group["name"] == "vertices":
+                stored_state = self.optimizer.state.get(group['params'][0], None)
+                if stored_state is not None and "exp_avg" in stored_state and "exp_avg_sq" in stored_state:
+                    exp_avg = stored_state["exp_avg"]
+                    exp_avg_sq = stored_state["exp_avg_sq"]
+                    
+                    norm_exp_avg = torch.norm(exp_avg, dim=-1)
+                    sqrt_exp_avg_sq = torch.sqrt(torch.sum(exp_avg_sq, dim=-1) + 1e-8)
+                    
+                    consistency = norm_exp_avg / (sqrt_exp_avg_sq + 1e-8)
+                    
+                    # Vertices that haven't been seen recently will have decayed exp_avg and exp_avg_sq.
+                    # Their consistency will approach 0. We should not prune them as "oscillating".
+                    consistency[sqrt_exp_avg_sq < 1e-6] = 1.0
+                    
+                    return consistency
+        return None
+
+    def add_new_gs(self, iteration, cap_max, splitt_large_triangles, context_adaptive_gradient_verification=False):
 
         current_num_points = self.vertices.shape[0]
         target_num = min(cap_max, int(self.add_percentage * current_num_points))
@@ -781,6 +809,13 @@ class TriangleModel:
         # Find indexes based on proba
         triangle_transp = self.importance_score
         probs = triangle_transp.squeeze()
+
+        if context_adaptive_gradient_verification:
+            consistency = self.get_gradient_consistency()
+            if consistency is not None:
+                # Calculate mean consistency for each triangle
+                tri_consistency = consistency[self._triangle_indices].mean(dim=1)
+                probs = probs * tri_consistency
 
         areas = self.triangle_areas().squeeze()
         probs = torch.where(areas < self.size_probs_zero, torch.zeros_like(probs), probs)
