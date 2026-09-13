@@ -1,7 +1,11 @@
 # My custom ones
 my_expts/*
-wandb/*
+!my_expts/baseline_mesh_splatting_metrics/
+my_expts/baseline_mesh_splatting_metrics/output
+my_expts/baseline_mesh_splatting_metrics/wandb
+my_expts/baseline_mesh_splatting_metrics/wandb_screenshots_old
 
+wandb/*
 # Byte-compiled / optimized / DLL files
 */__pycache__/
 *.py[cod]

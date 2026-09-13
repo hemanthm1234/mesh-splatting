@@ -1,0 +1,306 @@
+(mesh_splatting) ➜  baseline_mesh_splatting_metrics git:(main) ✗ ./run_expt_all.sh
+=== Baseline MeshSplatting Metrics: T&T Barn ===
+[0/6] WANDB_API_KEY detected! Authenticating with Weights & Biases...
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wa
+ndb login --relogin` to force relogin
+[1/6] Dataset is manually prepared for Barn.
+[2/6] Depth maps are pre-computed offline.
+=== [Step 3] Training ===
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wa
+ndb login --relogin` to force relogin
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Sparse Adam optimizer available
+Optimizing /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Barn_baseline
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [off]
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:208
+: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, ple
+ase use 'weights' instead.
+  warnings.warn(
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:223
+: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and
+may be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGE
+NET1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Loading model from: /home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/lpips/weight
+s/v0.1/vgg.pth
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wa
+ndb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.28.2
+wandb: Run data is saved locally in /data1/hemanth/mesh-splatting/wandb/run-20260906_161726-7k21m3y5
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run elated-donkey-2
+wandb:  View project at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting
+wandb:  View run at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/7k21m3y5
+Training progress: 100%|█| 30000/30000 [1:13:23<00:00,  6.81it/s, Loss=0.08
+wandb:
+wandb: 🚀 View run elated-donkey-2 at: https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/7k21m3y5
+wandb: Find logs at: wandb/run-20260906_161726-7k21m3y5/logs
+=== Training Complete! ===
+=== [Step 4] Rendering & Metrics ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output
+/Barn_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Barn_ba
+seline/cfg_args
+Rendering /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Barn_baseline
+Rendering progress: 100%|██████████████████| 52/52 [01:11<00:00,  1.37s/it]
+Computing Metrics...
+
+Scene: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Barn_baseline
+Method: ours_30000
+Metric evaluation progress: 100%|██████████| 52/52 [01:41<00:00,  1.95s/it]
+  SSIM :    0.6805932
+  PSNR :   22.1436348
+  LPIPS:    0.3829934
+
+=== Rendering & Metrics Complete! ===
+=== [Step 5] Extracting Native Mesh (No TSDF) ===
+Saved PLY to: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Barn_baselin
+e/native_mesh_30000.ply
+Vertices: 2736849, Faces: 4757839
+Native mesh exported to /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ba
+rn_baseline/native_mesh_30000.ply
+Mesh file size: 101MB
+Vertices: 2736849, Faces: 4757839
+=== Native Mesh Extraction Complete! ===
+[!] Error: Mesh file not found at /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics
+/output/Barn_baseline/point_cloud/iteration_30000/native_mesh_30000.ply
+    Please make sure 06_extract_native.sh ran successfully.
+[!] Evaluation failed. Continuing pipeline...
+=== [Step 7] Creating Video ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output
+/Barn_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Barn_ba
+seline/cfg_args
+Creating video for /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Barn_ba
+seline
+triangles:  torch.Size([4757839, 3])
+vertices:  torch.Size([2736849, 3])
+Loading trained model at iteration 30000
+Reading camera 410/410
+Loading Training Cameras
+[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.
+ If this is not desired, please explicitly specify '--resolution/-r' as 1
+Loading Test Cameras
+triangles:  torch.Size([4757839, 3])
+vertices:  torch.Size([2736849, 3])
+Rendering progress: 100%|██████████████| 1200/1200 [14:14<00:00,  1.40it/s]
+Video saved as rendered_video_30000.mp4
+=== Video Creation Complete! ===
+Video saved as /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Barn_baseli
+ne/rendered_video_30000.mp4
+=== Experiment Complete for Barn! ===
+=== Baseline MeshSplatting Metrics: T&T Caterpillar ===
+[0/6] WANDB_API_KEY detected! Authenticating with Weights & Biases...
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wa
+ndb login --relogin` to force relogin
+[1/6] Dataset is manually prepared for Caterpillar.
+[2/6] Depth maps are pre-computed offline.
+=== [Step 3] Training ===
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wa
+ndb login --relogin` to force relogin
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Sparse Adam optimizer available
+Optimizing /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Caterpillar_bas
+eline
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [off]
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:208
+: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, ple
+ase use 'weights' instead.
+  warnings.warn(
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:223
+: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and
+may be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGE
+NET1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Loading model from: /home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/lpips/weight
+s/v0.1/vgg.pth
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wa
+ndb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.28.2
+wandb: Run data is saved locally in /data1/hemanth/mesh-splatting/wandb/run-20260906_175409-fnw9rt1f
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run fallen-sound-3
+wandb:  View project at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting
+wandb:  View run at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/fnw9rt1f
+Training progress: 100%|█| 30000/30000 [1:12:01<00:00,  6.94it/s, Loss=0.20
+wandb:
+wandb: 🚀 View run fallen-sound-3 at: https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/fnw9rt1f
+wandb: Find logs at: wandb/run-20260906_175409-fnw9rt1f/logs
+=== Training Complete! ===
+=== [Step 4] Rendering & Metrics ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output
+/Caterpillar_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Caterpi
+llar_baseline/cfg_args
+Rendering /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Caterpillar_base
+line
+Rendering progress: 100%|██████████████████| 48/48 [01:11<00:00,  1.49s/it]
+Computing Metrics...
+
+Scene: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Caterpillar_baselin
+e
+Method: ours_30000
+Metric evaluation progress: 100%|██████████| 48/48 [01:35<00:00,  2.00s/it]
+  SSIM :    0.5558360
+  PSNR :   18.6232433
+  LPIPS:    0.4610850
+
+=== Rendering & Metrics Complete! ===
+=== [Step 5] Extracting Native Mesh (No TSDF) ===
+Saved PLY to: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Caterpillar_
+baseline/native_mesh_30000.ply
+Vertices: 2864929, Faces: 4491002
+Native mesh exported to /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ca
+terpillar_baseline/native_mesh_30000.ply
+Mesh file size: 100MB
+Vertices: 2864929, Faces: 4491002
+=== Native Mesh Extraction Complete! ===
+[!] Error: Mesh file not found at /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics
+/output/Caterpillar_baseline/point_cloud/iteration_30000/native_mesh_30000.ply
+    Please make sure 06_extract_native.sh ran successfully.
+[!] Evaluation failed. Continuing pipeline...
+=== [Step 7] Creating Video ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output
+/Caterpillar_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Caterpi
+llar_baseline/cfg_args
+Creating video for /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Caterpi
+llar_baseline
+triangles:  torch.Size([4491002, 3])
+vertices:  torch.Size([2864929, 3])
+Loading trained model at iteration 30000
+Reading camera 383/383
+Loading Training Cameras
+[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.
+ If this is not desired, please explicitly specify '--resolution/-r' as 1
+Loading Test Cameras
+triangles:  torch.Size([4491002, 3])
+vertices:  torch.Size([2864929, 3])
+Rendering progress: 100%|██████████████| 1200/1200 [16:39<00:00,  1.20it/s]
+Video saved as rendered_video_30000.mp4
+=== Video Creation Complete! ===
+Video saved as /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Caterpillar
+_baseline/rendered_video_30000.mp4
+=== Experiment Complete for Caterpillar! ===
+=== Baseline MeshSplatting Metrics: T&T Courthouse ===
+[0/6] WANDB_API_KEY detected! Authenticating with Weights & Biases...
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wa
+ndb login --relogin` to force relogin
+[1/6] Dataset is manually prepared for Courthouse.
+[2/6] Depth maps are pre-computed offline.
+=== [Step 3] Training ===
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wa
+ndb login --relogin` to force relogin
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Sparse Adam optimizer available
+Optimizing /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Courthouse_base
+line
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [off]
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:208
+: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, ple
+ase use 'weights' instead.
+  warnings.warn(
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:223
+: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and
+may be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGE
+NET1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Loading model from: /home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/lpips/weight
+s/v0.1/vgg.pth
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wa
+ndb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.28.2
+wandb: Run data is saved locally in /data1/hemanth/mesh-splatting/wandb/run-20260906_193234-h06dn28o
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run kind-sound-4
+wandb:  View project at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting
+wandb:  View run at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/h06dn28o
+Training progress: 100%|█| 30000/30000 [26:50<00:00, 18.62it/s, Loss=525.94
+wandb:
+wandb: 🚀 View run kind-sound-4 at: https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/h06dn28o
+wandb: Find logs at: wandb/run-20260906_193234-h06dn28o/logs
+=== Training Complete! ===
+=== [Step 4] Rendering & Metrics ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output
+/Courthouse_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Courtho
+use_baseline/cfg_args
+Rendering /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Courthouse_basel
+ine
+Rendering progress: 100%|████████████████████| 1/1 [00:01<00:00,  1.33s/it]
+Computing Metrics...
+
+Scene: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Courthouse_baseline
+Method: ours_30000
+Metric evaluation progress: 100%|████████████| 1/1 [00:02<00:00,  2.37s/it]
+  SSIM :    0.1118887
+  PSNR :    4.6717510
+  LPIPS:    0.6365488
+
+=== Rendering & Metrics Complete! ===
+=== [Step 5] Extracting Native Mesh (No TSDF) ===
+Saved PLY to: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Courthouse_b
+aseline/native_mesh_30000.ply
+Vertices: 6855, Faces: 6974
+Native mesh exported to /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Co
+urthouse_baseline/native_mesh_30000.ply
+Mesh file size: 1MB
+Vertices: 6855, Faces: 6974
+=== Native Mesh Extraction Complete! ===
+[!] Error: Mesh file not found at /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics
+/output/Courthouse_baseline/point_cloud/iteration_30000/native_mesh_30000.ply
+    Please make sure 06_extract_native.sh ran successfully.
+[!] Evaluation failed. Continuing pipeline...
+=== [Step 7] Creating Video ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output
+/Courthouse_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Courtho
+use_baseline/cfg_args
+Creating video for /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Courtho
+use_baseline
+triangles:  torch.Size([6974, 3])
+vertices:  torch.Size([6855, 3])
+Loading trained model at iteration 30000
+Reading camera 2/2
+Loading Training Cameras
+[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.
+ If this is not desired, please explicitly specify '--resolution/-r' as 1
+Loading Test Cameras
+triangles:  torch.Size([6974, 3])
+vertices:  torch.Size([6855, 3])
+/data1/hemanth/mesh-splatting/utils/render_utils.py:31: RuntimeWarning: invalid value encountered in div
+ide
+  return x / np.linalg.norm(x)
+Traceback (most recent call last):
+  File "/data1/hemanth/mesh-splatting/create_video.py", line 112, in <module>
+    cam_traj = generate_path(scene.getTrainCameras(), n_frames=n_frames)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/hemanth/mesh-splatting/utils/render_utils.py", line 192, in generate_path
+    cam.camera_center = cam.world_view_transform.inverse()[3, :3]
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch._C._LinAlgError: linalg.inv: The diagonal element 1 is zero, the inversion could not be completed
+because the input matrix is singular.
+(mesh_splatting) ➜  baseline_mesh_splatting_metrics git:(main) ✗ tmux capture-pane -pS - > tmux_logs.txt
+
+

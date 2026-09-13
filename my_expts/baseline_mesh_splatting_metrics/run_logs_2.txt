@@ -1,0 +1,656 @@
+(mesh_splatting) ➜  baseline_mesh_splatting_metrics git:(main) ✗ ./run_expt_all.sh
+
+=== Baseline MeshSplatting Metrics: T&T Ignatius ===
+[0/6] WANDB_API_KEY detected! Authenticating with Weights & Biases...
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+[1/6] Dataset is manually prepared for Ignatius.
+[2/6] Depth maps are pre-computed offline.
+=== [Step 3] Training ===
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Sparse Adam optimizer available
+Optimizing /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius_baselin
+e
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [off]
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:208:
+ UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, pleas
+e use 'weights' instead.
+  warnings.warn(
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:223:
+ UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and ma
+y be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGENET
+1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Loading model from: /home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/lpips/weights
+/v0.1/vgg.pth
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.28.2
+wandb: Run data is saved locally in /data1/hemanth/mesh-splatting/wandb/run-20260907_004703-t0x4cn5v
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run ignatius_1
+wandb:  View project at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting
+wandb:  View run at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/t0x4cn5v
+Training progress: 100%|█| 30000/30000 [55:09<00:00,  9.06it/s, Loss=0.
+wandb:
+wandb: 🚀 View run ignatius_1 at: https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/t0x4cn5v
+wandb: Find logs at: wandb/run-20260907_004703-t0x4cn5v/logs
+=== Training Complete! ===
+=== [Step 4] Rendering & Metrics ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/
+Ignatius_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius
+_baseline/cfg_args
+Rendering /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius_baseline
+Rendering progress: 100%|██████████████| 33/33 [00:41<00:00,  1.27s/it]
+Computing Metrics...
+
+Scene: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius_baseline
+Method: ours_30000
+Metric evaluation progress: 100%|██████| 33/33 [00:47<00:00,  1.45s/it]
+  SSIM :    0.5460057
+  PSNR :   18.2982330
+  LPIPS:    0.4302628
+
+=== Rendering & Metrics Complete! ===
+=== [Step 5] Extracting Native Mesh (No TSDF) ===
+Saved PLY to: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius_base
+line/native_mesh_30000.ply
+Vertices: 2904967, Faces: 4221360
+Native mesh exported to /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ign
+atius_baseline/native_mesh_30000.ply
+Mesh file size: 97MB
+Vertices: 2904967, Faces: 4221360
+=== Native Mesh Extraction Complete! ===
+=== Running Tanks & Temples Evaluation on /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_
+metrics/output/Ignatius_baseline/native_mesh_30000.ply ===
+--- MeshSplatting Evaluation Wrapper for Ignatius ---
+Loading mesh from: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius
+_baseline/native_mesh_30000.ply
+Mesh loaded successfully with 4221360 triangles and 2904967 vertices.
+Sampling 10000000 points uniformly from the mesh surface...
+Sampled point cloud has 10000000 points.
+Saving dense point cloud to: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/outpu
+t/Ignatius_baseline/native_mesh_30000_dense_pc.ply
+[Open3D WARNING] Write Ply clamped color value to valid range
+
+--- Executing Official Tanks & Temples Evaluation ---
+Command: /home/admin/miniconda3/envs/mesh_splatting/bin/python /data1/hemanth/tandt_eval/python_toolbox/e
+valuation/run.py --dataset-dir /data1/hemanth/datasets/tandt_eval_data/Ignatius --traj-path /data1/hemant
+h/datasets/tandt_eval_data/Ignatius/Ignatius_COLMAP_SfM.log --ply-path /data1/hemanth/mesh-splatting/my_e
+xpts/baseline_mesh_splatting_metrics/output/Ignatius_baseline/native_mesh_30000_dense_pc.ply --out-dir /d
+ata1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius_baseline/tnt_eval_re
+sults
+--------------------------------------------------
+
+===========================
+Evaluating Ignatius
+===========================
+/data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius_baseline/native_me
+sh_30000_dense_pc.ply
+/data1/hemanth/datasets/tandt_eval_data/Ignatius/Ignatius.ply
+[Registration] voxel_size: 0.003000, threshold: 0.240000
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 72159 points.
+[Open3D DEBUG] Pointcloud down sampled from 72159 points to 70630 points.
+[Open3D DEBUG] Pointcloud down sampled from 5016769 points to 4957123 points.
+[Open3D DEBUG] Pointcloud down sampled from 4957123 points to 1411325 points.
+[Open3D DEBUG] ICP Iteration #0: Fitness 0.6690, RMSE 0.1327
+[Open3D DEBUG] ICP Iteration #1: Fitness 0.7256, RMSE 0.1268
+[Open3D DEBUG] ICP Iteration #2: Fitness 0.7883, RMSE 0.1260
+[Open3D DEBUG] ICP Iteration #3: Fitness 0.8590, RMSE 0.1243
+[Open3D DEBUG] ICP Iteration #4: Fitness 0.9044, RMSE 0.1165
+[Open3D DEBUG] ICP Iteration #5: Fitness 0.9383, RMSE 0.1085
+[Open3D DEBUG] ICP Iteration #6: Fitness 0.9589, RMSE 0.1010
+[Open3D DEBUG] ICP Iteration #7: Fitness 0.9681, RMSE 0.0947
+[Open3D DEBUG] ICP Iteration #8: Fitness 0.9717, RMSE 0.0905
+[Open3D DEBUG] ICP Iteration #9: Fitness 0.9735, RMSE 0.0881
+[Open3D DEBUG] ICP Iteration #10: Fitness 0.9750, RMSE 0.0869
+[Open3D DEBUG] ICP Iteration #11: Fitness 0.9762, RMSE 0.0862
+[Open3D DEBUG] ICP Iteration #12: Fitness 0.9773, RMSE 0.0857
+[Open3D DEBUG] ICP Iteration #13: Fitness 0.9783, RMSE 0.0853
+[Open3D DEBUG] ICP Iteration #14: Fitness 0.9792, RMSE 0.0851
+[Open3D DEBUG] ICP Iteration #15: Fitness 0.9798, RMSE 0.0848
+[Open3D DEBUG] ICP Iteration #16: Fitness 0.9801, RMSE 0.0845
+[Open3D DEBUG] ICP Iteration #17: Fitness 0.9801, RMSE 0.0843
+[Open3D DEBUG] ICP Iteration #18: Fitness 0.9801, RMSE 0.0840
+[Open3D DEBUG] ICP Iteration #19: Fitness 0.9802, RMSE 0.0839
+[Registration] voxel_size: 0.001500, threshold: 0.060000
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 111289 points.
+[Open3D DEBUG] Pointcloud down sampled from 111289 points to 110362 points.
+[Open3D DEBUG] Pointcloud down sampled from 5016769 points to 4957123 points.
+[Open3D DEBUG] Pointcloud down sampled from 4957123 points to 4181506 points.
+[Open3D DEBUG] ICP Iteration #0: Fitness 0.4626, RMSE 0.0324
+[Open3D DEBUG] ICP Iteration #1: Fitness 0.4647, RMSE 0.0319
+[Open3D DEBUG] ICP Iteration #2: Fitness 0.4666, RMSE 0.0317
+[Open3D DEBUG] ICP Iteration #3: Fitness 0.4681, RMSE 0.0315
+[Open3D DEBUG] ICP Iteration #4: Fitness 0.4701, RMSE 0.0314
+[Open3D DEBUG] ICP Iteration #5: Fitness 0.4725, RMSE 0.0314
+[Open3D DEBUG] ICP Iteration #6: Fitness 0.4746, RMSE 0.0314
+[Open3D DEBUG] ICP Iteration #7: Fitness 0.4760, RMSE 0.0313
+[Open3D DEBUG] ICP Iteration #8: Fitness 0.4774, RMSE 0.0313
+[Open3D DEBUG] ICP Iteration #9: Fitness 0.4795, RMSE 0.0313
+[Open3D DEBUG] ICP Iteration #10: Fitness 0.4815, RMSE 0.0313
+[Open3D DEBUG] ICP Iteration #11: Fitness 0.4832, RMSE 0.0313
+[Open3D DEBUG] ICP Iteration #12: Fitness 0.4853, RMSE 0.0314
+[Open3D DEBUG] ICP Iteration #13: Fitness 0.4868, RMSE 0.0314
+[Open3D DEBUG] ICP Iteration #14: Fitness 0.4888, RMSE 0.0314
+[Open3D DEBUG] ICP Iteration #15: Fitness 0.4905, RMSE 0.0315
+[Open3D DEBUG] ICP Iteration #16: Fitness 0.4928, RMSE 0.0315
+[Open3D DEBUG] ICP Iteration #17: Fitness 0.4948, RMSE 0.0316
+[Open3D DEBUG] ICP Iteration #18: Fitness 0.4967, RMSE 0.0316
+[Open3D DEBUG] ICP Iteration #19: Fitness 0.4987, RMSE 0.0317
+[Registration] threshold: 0.006000
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 113798 points.
+[Open3D DEBUG] Pointcloud down sampled from 5016769 points to 4957123 points.
+[Open3D DEBUG] Pointcloud down sampled from 4957123 points to 4957123 points.
+[Open3D DEBUG] ICP Iteration #0: Fitness 0.0671, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #1: Fitness 0.0673, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #2: Fitness 0.0672, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #3: Fitness 0.0672, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #4: Fitness 0.0674, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #5: Fitness 0.0674, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #6: Fitness 0.0675, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #7: Fitness 0.0675, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #8: Fitness 0.0677, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #9: Fitness 0.0678, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #10: Fitness 0.0679, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #11: Fitness 0.0680, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #12: Fitness 0.0681, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #13: Fitness 0.0681, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #14: Fitness 0.0681, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #15: Fitness 0.0682, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #16: Fitness 0.0682, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #17: Fitness 0.0683, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #18: Fitness 0.0683, RMSE 0.0034
+[Open3D DEBUG] ICP Iteration #19: Fitness 0.0683, RMSE 0.0034
+[EvaluateHisto]
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 113888 points.
+[Open3D DEBUG] Pointcloud down sampled from 113888 points to 112904 points.
+/data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius_baseline/tnt_eval_
+results/Ignatius.precision.ply
+[Open3D DEBUG] Pointcloud down sampled from 5016769 points to 4957123 points.
+[Open3D DEBUG] Pointcloud down sampled from 4957123 points to 4181506 points.
+[compute_point_cloud_to_point_cloud_distance]
+[compute_point_cloud_to_point_cloud_distance]
+[ViewDistances] Add color coding to visualize error
+[Open3D DEBUG] Write geometry::PointCloud: 112904 vertices.
+[ViewDistances] Add color coding to visualize error
+[Open3D DEBUG] Write geometry::PointCloud: 4181506 vertices.
+[get_f1_score_histo2]
+==============================
+evaluation result : Ignatius
+==============================
+distance tau : 0.003
+precision : 0.0349
+recall : 0.0066
+f-score : 0.0111
+==============================
+
+Evaluation completed successfully!
+You can find the results in the evaluation output directory.
+=== Tanks & Temples Evaluation Complete ===
+=== [Step 7] Creating Video ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/
+Ignatius_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius
+_baseline/cfg_args
+Creating video for /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius
+_baseline
+triangles:  torch.Size([4221360, 3])
+vertices:  torch.Size([2904967, 3])
+Loading trained model at iteration 30000
+Reading camera 263/263
+Loading Training Cameras
+[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.
+ If this is not desired, please explicitly specify '--resolution/-r' as 1
+Loading Test Cameras
+triangles:  torch.Size([4221360, 3])
+vertices:  torch.Size([2904967, 3])
+Rendering progress: 100%|██████████| 1200/1200 [14:33<00:00,  1.37it/s]
+Video saved as /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius_bas
+eline/rendered_video_30000.mp4
+=== Video Creation Complete! ===
+Video saved as /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Ignatius_bas
+eline/rendered_video_30000.mp4
+=== Experiment Complete for Ignatius! ===
+=== Baseline MeshSplatting Metrics: T&T Meeting_room ===
+[0/6] WANDB_API_KEY detected! Authenticating with Weights & Biases...
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+[1/6] Dataset is manually prepared for Meeting_room.
+[2/6] Depth maps are pre-computed offline.
+=== [Step 3] Training ===
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Sparse Adam optimizer available
+Optimizing /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room_bas
+eline
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [off]
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:208:
+ UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, pleas
+e use 'weights' instead.
+  warnings.warn(
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:223:
+ UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and ma
+y be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGENET
+1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Loading model from: /home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/lpips/weights
+/v0.1/vgg.pth
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.28.2
+wandb: Run data is saved locally in /data1/hemanth/mesh-splatting/wandb/run-20260907_020320-04p9faui
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run meeting_room_1
+wandb:  View project at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting
+wandb:  View run at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/04p9faui
+Training progress: 100%|█| 30000/30000 [57:52<00:00,  8.64it/s, Loss=0.
+wandb:
+wandb: 🚀 View run meeting_room_1 at: https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/04p9faui
+wandb: Find logs at: wandb/run-20260907_020320-04p9faui/logs
+=== Training Complete! ===
+=== [Step 4] Rendering & Metrics ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/
+Meeting_room_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_
+room_baseline/cfg_args
+Rendering /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room_base
+line
+Rendering progress: 100%|██████████████| 47/47 [01:16<00:00,  1.64s/it]
+Computing Metrics...
+
+Scene: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room_baselin
+e
+Method: ours_30000
+Metric evaluation progress: 100%|██████| 47/47 [01:07<00:00,  1.45s/it]
+  SSIM :    0.7324855
+  PSNR :   20.1833439
+  LPIPS:    0.4107987
+
+=== Rendering & Metrics Complete! ===
+=== [Step 5] Extracting Native Mesh (No TSDF) ===
+Saved PLY to: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room_
+baseline/native_mesh_30000.ply
+Vertices: 2911266, Faces: 5805545
+Native mesh exported to /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Mee
+ting_room_baseline/native_mesh_30000.ply
+Mesh file size: 117MB
+Vertices: 2911266, Faces: 5805545
+=== Native Mesh Extraction Complete! ===
+=== Running Tanks & Temples Evaluation on /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_
+metrics/output/Meeting_room_baseline/native_mesh_30000.ply ===
+--- MeshSplatting Evaluation Wrapper for Meetingroom ---
+Loading mesh from: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_
+room_baseline/native_mesh_30000.ply
+Mesh loaded successfully with 5805545 triangles and 2911266 vertices.
+Sampling 10000000 points uniformly from the mesh surface...
+Sampled point cloud has 10000000 points.
+Saving dense point cloud to: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/outpu
+t/Meeting_room_baseline/native_mesh_30000_dense_pc.ply
+[Open3D WARNING] Write Ply clamped color value to valid range
+
+--- Executing Official Tanks & Temples Evaluation ---
+Command: /home/admin/miniconda3/envs/mesh_splatting/bin/python /data1/hemanth/tandt_eval/python_toolbox/e
+valuation/run.py --dataset-dir /data1/hemanth/datasets/tandt_eval_data/Meetingroom --traj-path /data1/hem
+anth/datasets/tandt_eval_data/Meetingroom/Meetingroom_COLMAP_SfM.log --ply-path /data1/hemanth/mesh-splat
+ting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room_baseline/native_mesh_30000_dense_pc.ply
+ --out-dir /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room_bas
+eline/tnt_eval_results
+--------------------------------------------------
+
+===========================
+Evaluating Meetingroom
+===========================
+/data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room_baseline/nativ
+e_mesh_30000_dense_pc.ply
+/data1/hemanth/datasets/tandt_eval_data/Meetingroom/Meetingroom.ply
+[Registration] voxel_size: 0.010000, threshold: 0.800000
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 8004151 points.
+[Open3D DEBUG] Pointcloud down sampled from 8004151 points to 5469232 points.
+[Open3D DEBUG] Pointcloud down sampled from 44452218 points to 44437563 points.
+[Open3D DEBUG] Pointcloud down sampled from 44437563 points to 9704070 points.
+[Open3D DEBUG] ICP Iteration #0: Fitness 0.9016, RMSE 0.3766
+[Open3D DEBUG] ICP Iteration #1: Fitness 0.9038, RMSE 0.3718
+[Open3D DEBUG] ICP Iteration #2: Fitness 0.9056, RMSE 0.3679
+[Open3D DEBUG] ICP Iteration #3: Fitness 0.9065, RMSE 0.3641
+[Open3D DEBUG] ICP Iteration #4: Fitness 0.9068, RMSE 0.3610
+[Open3D DEBUG] ICP Iteration #5: Fitness 0.9070, RMSE 0.3586
+[Open3D DEBUG] ICP Iteration #6: Fitness 0.9072, RMSE 0.3568
+[Open3D DEBUG] ICP Iteration #7: Fitness 0.9077, RMSE 0.3556
+[Open3D DEBUG] ICP Iteration #8: Fitness 0.9083, RMSE 0.3549
+[Open3D DEBUG] ICP Iteration #9: Fitness 0.9088, RMSE 0.3543
+[Open3D DEBUG] ICP Iteration #10: Fitness 0.9093, RMSE 0.3539
+[Open3D DEBUG] ICP Iteration #11: Fitness 0.9098, RMSE 0.3536
+[Open3D DEBUG] ICP Iteration #12: Fitness 0.9102, RMSE 0.3534
+[Open3D DEBUG] ICP Iteration #13: Fitness 0.9107, RMSE 0.3533
+[Open3D DEBUG] ICP Iteration #14: Fitness 0.9111, RMSE 0.3531
+[Open3D DEBUG] ICP Iteration #15: Fitness 0.9114, RMSE 0.3529
+[Open3D DEBUG] ICP Iteration #16: Fitness 0.9117, RMSE 0.3528
+[Open3D DEBUG] ICP Iteration #17: Fitness 0.9121, RMSE 0.3527
+[Open3D DEBUG] ICP Iteration #18: Fitness 0.9123, RMSE 0.3526
+[Open3D DEBUG] ICP Iteration #19: Fitness 0.9126, RMSE 0.3525
+[Registration] voxel_size: 0.005000, threshold: 0.200000
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 7808251 points.
+[Open3D DEBUG] Pointcloud down sampled from 7808251 points to 7102198 points.
+[Open3D DEBUG] Pointcloud down sampled from 44452218 points to 44437563 points.
+[Open3D DEBUG] Pointcloud down sampled from 44437563 points to 34670133 points.
+[Open3D DEBUG] ICP Iteration #0: Fitness 0.3994, RMSE 0.1099
+[Open3D DEBUG] ICP Iteration #1: Fitness 0.4005, RMSE 0.1092
+[Open3D DEBUG] ICP Iteration #2: Fitness 0.4016, RMSE 0.1087
+[Open3D DEBUG] ICP Iteration #3: Fitness 0.4027, RMSE 0.1084
+[Open3D DEBUG] ICP Iteration #4: Fitness 0.4040, RMSE 0.1082
+[Open3D DEBUG] ICP Iteration #5: Fitness 0.4050, RMSE 0.1080
+[Open3D DEBUG] ICP Iteration #6: Fitness 0.4059, RMSE 0.1078
+[Open3D DEBUG] ICP Iteration #7: Fitness 0.4065, RMSE 0.1076
+[Open3D DEBUG] ICP Iteration #8: Fitness 0.4069, RMSE 0.1074
+[Open3D DEBUG] ICP Iteration #9: Fitness 0.4070, RMSE 0.1073
+[Open3D DEBUG] ICP Iteration #10: Fitness 0.4072, RMSE 0.1071
+[Open3D DEBUG] ICP Iteration #11: Fitness 0.4072, RMSE 0.1070
+[Open3D DEBUG] ICP Iteration #12: Fitness 0.4073, RMSE 0.1070
+[Open3D DEBUG] ICP Iteration #13: Fitness 0.4073, RMSE 0.1069
+[Open3D DEBUG] ICP Iteration #14: Fitness 0.4073, RMSE 0.1068
+[Open3D DEBUG] ICP Iteration #15: Fitness 0.4073, RMSE 0.1068
+[Open3D DEBUG] ICP Iteration #16: Fitness 0.4073, RMSE 0.1067
+[Open3D DEBUG] ICP Iteration #17: Fitness 0.4074, RMSE 0.1067
+[Open3D DEBUG] ICP Iteration #18: Fitness 0.4074, RMSE 0.1066
+[Open3D DEBUG] ICP Iteration #19: Fitness 0.4074, RMSE 0.1066
+[Registration] threshold: 0.020000
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 7760939 points.
+[Open3D DEBUG] Pointcloud down sampled from 7760939 points to 3880470 points.
+[Open3D DEBUG] Pointcloud down sampled from 44452218 points to 44437563 points.
+[Open3D DEBUG] Pointcloud down sampled from 44437563 points to 4039779 points.
+[Open3D DEBUG] ICP Iteration #0: Fitness 0.0431, RMSE 0.0130
+[Open3D DEBUG] ICP Iteration #1: Fitness 0.0431, RMSE 0.0130
+[Open3D DEBUG] ICP Iteration #2: Fitness 0.0431, RMSE 0.0130
+[EvaluateHisto]
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 7760891 points.
+[Open3D DEBUG] Pointcloud down sampled from 7760891 points to 7067929 points.
+/data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room_baseline/tnt_e
+val_results/Meetingroom.precision.ply
+[Open3D DEBUG] Pointcloud down sampled from 44452218 points to 44437563 points.
+[Open3D DEBUG] Pointcloud down sampled from 44437563 points to 34670133 points.
+[compute_point_cloud_to_point_cloud_distance]
+[compute_point_cloud_to_point_cloud_distance]
+[ViewDistances] Add color coding to visualize error
+[Open3D DEBUG] Write geometry::PointCloud: 7067929 vertices.
+[ViewDistances] Add color coding to visualize error
+[Open3D DEBUG] Write geometry::PointCloud: 34670133 vertices.
+[get_f1_score_histo2]
+==============================
+evaluation result : Meetingroom
+==============================
+distance tau : 0.010
+precision : 0.0243
+recall : 0.0240
+f-score : 0.0241
+==============================
+
+Evaluation completed successfully!
+You can find the results in the evaluation output directory.
+=== Tanks & Temples Evaluation Complete ===
+=== [Step 7] Creating Video ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/
+Meeting_room_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_
+room_baseline/cfg_args
+Creating video for /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_
+room_baseline
+triangles:  torch.Size([5805545, 3])
+vertices:  torch.Size([2911266, 3])
+Loading trained model at iteration 30000
+Reading camera 371/371
+Loading Training Cameras
+[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.
+ If this is not desired, please explicitly specify '--resolution/-r' as 1
+Loading Test Cameras
+triangles:  torch.Size([5805545, 3])
+vertices:  torch.Size([2911266, 3])
+Rendering progress: 100%|██████████| 1200/1200 [15:03<00:00,  1.33it/s]
+Video saved as /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room
+_baseline/rendered_video_30000.mp4
+=== Video Creation Complete! ===
+Video saved as /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Meeting_room
+_baseline/rendered_video_30000.mp4
+=== Experiment Complete for Meeting_room! ===
+=== Baseline MeshSplatting Metrics: T&T Truck ===
+[0/6] WANDB_API_KEY detected! Authenticating with Weights & Biases...
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+[1/6] Dataset is manually prepared for Truck.
+[2/6] Depth maps are pre-computed offline.
+=== [Step 3] Training ===
+wandb: [wandb.login()] Using explicit session credentials for https://api.wandb.ai.
+wandb: Appending key for api.wandb.ai to your netrc file: /home/admin/.netrc
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Sparse Adam optimizer available
+Optimizing /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_baseline
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [off]
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:208:
+ UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, pleas
+e use 'weights' instead.
+  warnings.warn(
+/home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/torchvision/models/_utils.py:223:
+ UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and ma
+y be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGENET
+1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Loading model from: /home/admin/miniconda3/envs/mesh_splatting/lib/python3.11/site-packages/lpips/weights
+/v0.1/vgg.pth
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: hemanth-wandb (hemanth-wandb-iit-madras) to https://api.wandb.ai. Use `wan
+db login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.28.2
+wandb: Run data is saved locally in /data1/hemanth/mesh-splatting/wandb/run-20260907_034200-txy5d45x
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run truck_1
+wandb:  View project at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting
+wandb:  View run at https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/txy5d45x
+Training progress: 100%|█| 30000/30000 [59:55<00:00,  8.34it/s, Loss=0.
+wandb:
+wandb: 🚀 View run truck_1 at: https://wandb.ai/HiLite-4D/HiLite-4D-MeshSplatting/runs/txy5d45x
+wandb: Find logs at: wandb/run-20260907_034200-txy5d45x/logs
+=== Training Complete! ===
+=== [Step 4] Rendering & Metrics ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/
+Truck_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_ba
+seline/cfg_args
+Rendering /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_baseline
+Rendering progress: 100%|██████████████| 32/32 [00:52<00:00,  1.63s/it]
+Computing Metrics...
+
+Scene: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_baseline
+Method: ours_30000
+Metric evaluation progress: 100%|██████| 32/32 [00:46<00:00,  1.44s/it]
+  SSIM :    0.6864604
+  PSNR :   20.3848686
+  LPIPS:    0.3752214
+
+=== Rendering & Metrics Complete! ===
+=== [Step 5] Extracting Native Mesh (No TSDF) ===
+Saved PLY to: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_baselin
+e/native_mesh_30000.ply
+Vertices: 2958775, Faces: 4577271
+Native mesh exported to /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Tru
+ck_baseline/native_mesh_30000.ply
+Mesh file size: 102MB
+Vertices: 2958775, Faces: 4577271
+=== Native Mesh Extraction Complete! ===
+=== Running Tanks & Temples Evaluation on /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_
+metrics/output/Truck_baseline/native_mesh_30000.ply ===
+--- MeshSplatting Evaluation Wrapper for Truck ---
+Loading mesh from: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_ba
+seline/native_mesh_30000.ply
+Mesh loaded successfully with 4577271 triangles and 2958775 vertices.
+Sampling 10000000 points uniformly from the mesh surface...
+Sampled point cloud has 10000000 points.
+Saving dense point cloud to: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/outpu
+t/Truck_baseline/native_mesh_30000_dense_pc.ply
+[Open3D WARNING] Write Ply clamped color value to valid range
+
+--- Executing Official Tanks & Temples Evaluation ---
+Command: /home/admin/miniconda3/envs/mesh_splatting/bin/python /data1/hemanth/tandt_eval/python_toolbox/e
+valuation/run.py --dataset-dir /data1/hemanth/datasets/tandt_eval_data/Truck --traj-path /data1/hemanth/d
+atasets/tandt_eval_data/Truck/Truck_COLMAP_SfM.log --ply-path /data1/hemanth/mesh-splatting/my_expts/base
+line_mesh_splatting_metrics/output/Truck_baseline/native_mesh_30000_dense_pc.ply --out-dir /data1/hemanth
+/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_baseline/tnt_eval_results
+--------------------------------------------------
+
+===========================
+Evaluating Truck
+===========================
+/data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_baseline/native_mesh_
+30000_dense_pc.ply
+/data1/hemanth/datasets/tandt_eval_data/Truck/Truck.ply
+[Registration] voxel_size: 0.005000, threshold: 0.400000
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 749695 points.
+[Open3D DEBUG] Pointcloud down sampled from 749695 points to 688779 points.
+[Open3D DEBUG] Pointcloud down sampled from 8071886 points to 7143563 points.
+[Open3D DEBUG] Pointcloud down sampled from 7143563 points to 2545560 points.
+[Open3D DEBUG] ICP Iteration #0: Fitness 0.9247, RMSE 0.2021
+[Open3D DEBUG] ICP Iteration #1: Fitness 0.9724, RMSE 0.1601
+[Open3D DEBUG] ICP Iteration #2: Fitness 0.9718, RMSE 0.1388
+[Open3D DEBUG] ICP Iteration #3: Fitness 0.9719, RMSE 0.1318
+[Open3D DEBUG] ICP Iteration #4: Fitness 0.9721, RMSE 0.1292
+[Open3D DEBUG] ICP Iteration #5: Fitness 0.9720, RMSE 0.1278
+[Open3D DEBUG] ICP Iteration #6: Fitness 0.9718, RMSE 0.1269
+[Open3D DEBUG] ICP Iteration #7: Fitness 0.9718, RMSE 0.1264
+[Open3D DEBUG] ICP Iteration #8: Fitness 0.9718, RMSE 0.1259
+[Open3D DEBUG] ICP Iteration #9: Fitness 0.9718, RMSE 0.1254
+[Open3D DEBUG] ICP Iteration #10: Fitness 0.9718, RMSE 0.1250
+[Open3D DEBUG] ICP Iteration #11: Fitness 0.9718, RMSE 0.1246
+[Open3D DEBUG] ICP Iteration #12: Fitness 0.9719, RMSE 0.1243
+[Open3D DEBUG] ICP Iteration #13: Fitness 0.9719, RMSE 0.1240
+[Open3D DEBUG] ICP Iteration #14: Fitness 0.9720, RMSE 0.1237
+[Open3D DEBUG] ICP Iteration #15: Fitness 0.9720, RMSE 0.1234
+[Open3D DEBUG] ICP Iteration #16: Fitness 0.9721, RMSE 0.1232
+[Open3D DEBUG] ICP Iteration #17: Fitness 0.9721, RMSE 0.1229
+[Open3D DEBUG] ICP Iteration #18: Fitness 0.9721, RMSE 0.1226
+[Open3D DEBUG] ICP Iteration #19: Fitness 0.9722, RMSE 0.1224
+[Registration] voxel_size: 0.002500, threshold: 0.100000
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 817033 points.
+[Open3D DEBUG] Pointcloud down sampled from 817033 points to 802621 points.
+[Open3D DEBUG] Pointcloud down sampled from 8071886 points to 7143563 points.
+[Open3D DEBUG] Pointcloud down sampled from 7143563 points to 6251918 points.
+[Open3D DEBUG] ICP Iteration #0: Fitness 0.6740, RMSE 0.0393
+[Open3D DEBUG] ICP Iteration #1: Fitness 0.6732, RMSE 0.0371
+[Open3D DEBUG] ICP Iteration #2: Fitness 0.6729, RMSE 0.0368
+[Open3D DEBUG] ICP Iteration #3: Fitness 0.6728, RMSE 0.0367
+[Open3D DEBUG] ICP Iteration #4: Fitness 0.6729, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #5: Fitness 0.6729, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #6: Fitness 0.6730, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #7: Fitness 0.6732, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #8: Fitness 0.6733, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #9: Fitness 0.6734, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #10: Fitness 0.6736, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #11: Fitness 0.6737, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #12: Fitness 0.6738, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #13: Fitness 0.6739, RMSE 0.0366
+[Open3D DEBUG] ICP Iteration #14: Fitness 0.6741, RMSE 0.0365
+[Open3D DEBUG] ICP Iteration #15: Fitness 0.6742, RMSE 0.0365
+[Open3D DEBUG] ICP Iteration #16: Fitness 0.6742, RMSE 0.0365
+[Open3D DEBUG] ICP Iteration #17: Fitness 0.6743, RMSE 0.0365
+[Open3D DEBUG] ICP Iteration #18: Fitness 0.6744, RMSE 0.0365
+[Open3D DEBUG] ICP Iteration #19: Fitness 0.6745, RMSE 0.0365
+[Registration] threshold: 0.010000
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 826507 points.
+[Open3D DEBUG] Pointcloud down sampled from 8071886 points to 7143563 points.
+[Open3D DEBUG] Pointcloud down sampled from 7143563 points to 3571782 points.
+[Open3D DEBUG] ICP Iteration #0: Fitness 0.2417, RMSE 0.0059
+[Open3D DEBUG] ICP Iteration #1: Fitness 0.2484, RMSE 0.0058
+[Open3D DEBUG] ICP Iteration #2: Fitness 0.2513, RMSE 0.0058
+[Open3D DEBUG] ICP Iteration #3: Fitness 0.2524, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #4: Fitness 0.2528, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #5: Fitness 0.2530, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #6: Fitness 0.2531, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #7: Fitness 0.2530, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #8: Fitness 0.2530, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #9: Fitness 0.2530, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #10: Fitness 0.2530, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #11: Fitness 0.2530, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #12: Fitness 0.2529, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #13: Fitness 0.2529, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #14: Fitness 0.2529, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #15: Fitness 0.2529, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #16: Fitness 0.2529, RMSE 0.0057
+[Open3D DEBUG] ICP Iteration #17: Fitness 0.2528, RMSE 0.0056
+[Open3D DEBUG] ICP Iteration #18: Fitness 0.2528, RMSE 0.0056
+[Open3D DEBUG] ICP Iteration #19: Fitness 0.2528, RMSE 0.0056
+[EvaluateHisto]
+[Open3D DEBUG] Pointcloud down sampled from 10000000 points to 826682 points.
+[Open3D DEBUG] Pointcloud down sampled from 826682 points to 811911 points.
+/data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_baseline/tnt_eval_res
+ults/Truck.precision.ply
+[Open3D DEBUG] Pointcloud down sampled from 8071886 points to 7143563 points.
+[Open3D DEBUG] Pointcloud down sampled from 7143563 points to 6251918 points.
+[compute_point_cloud_to_point_cloud_distance]
+[compute_point_cloud_to_point_cloud_distance]
+[ViewDistances] Add color coding to visualize error
+[Open3D DEBUG] Write geometry::PointCloud: 811911 vertices.
+[ViewDistances] Add color coding to visualize error
+[Open3D DEBUG] Write geometry::PointCloud: 6251918 vertices.
+[get_f1_score_histo2]
+==============================
+evaluation result : Truck
+==============================
+distance tau : 0.005
+precision : 0.1414
+recall : 0.0709
+f-score : 0.0945
+==============================
+
+Evaluation completed successfully!
+You can find the results in the evaluation output directory.
+=== Tanks & Temples Evaluation Complete ===
+=== [Step 7] Creating Video ===
+[GsTaichi] version 4.6.0, llvm 20.1.0, commit 72f02b06, linux, python 3.11.15
+Looking for config file in /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/
+Truck_baseline/cfg_args
+Config file found: /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_ba
+seline/cfg_args
+Creating video for /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_ba
+seline
+triangles:  torch.Size([4577271, 3])
+vertices:  torch.Size([2958775, 3])
+Loading trained model at iteration 30000
+Reading camera 251/251
+Loading Training Cameras
+[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.
+ If this is not desired, please explicitly specify '--resolution/-r' as 1
+Loading Test Cameras
+triangles:  torch.Size([4577271, 3])
+vertices:  torch.Size([2958775, 3])
+Rendering progress: 100%|██████████| 1200/1200 [15:28<00:00,  1.29it/s]
+Video saved as /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_baseli
+ne/rendered_video_30000.mp4
+=== Video Creation Complete! ===
+Video saved as /data1/hemanth/mesh-splatting/my_expts/baseline_mesh_splatting_metrics/output/Truck_baseli
+ne/rendered_video_30000.mp4
+=== Experiment Complete for Truck! ===
+=== All 6 Baseline Experiments Compldeted Successfully! ===
+(mesh_splatting) ➜  baseline_mesh_splatting_metrics git:(main) ✗ tmux capture-pane -pS - > run_logs_2.txt
+
+
